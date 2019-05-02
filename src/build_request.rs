@@ -143,7 +143,6 @@ impl BuildRequest {
 }
 
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

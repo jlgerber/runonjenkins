@@ -1,32 +1,8 @@
 use url::{Url, ParseError};
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
-use crate::vcs_system::VcsSystem;
-use std::default::Default;
-use crate::constants::{
-    BUILD_SERVER,
-    BUILD_DOMAIN,
-    BUILD_SERVER_PORT,
-    BUILD_ROUTE,
-
-};
-
-#[derive(Debug,PartialEq,PartialOrd,Eq,Ord, Serialize, Deserialize)]
-pub enum Platform {
-    Cent6,
-    Cent7,
-    Unknown(String),
-}
-
-impl<'a> From<&'a str> for Platform {
-    fn from(value: &'a str) -> Platform {
-        match value.to_lowercase().as_str() {
-            "cent6_64" | "cent6" => Platform::Cent6,
-            "cent7_64" | "cent7" => Platform::Cent7,
-            _ => Platform::Unknown(value.to_string())
-        }
-    }
-}
+use crate::VcsSystem;
+use crate::Platform;
 
 #[derive(Debug, PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize)]
 pub struct BuildRequest {
@@ -63,38 +39,6 @@ impl BuildRequest {
     }
 }
 
-pub struct BuildServer {
-    host: String,
-    port: u32,
-    domain: String,
-}
-
-impl BuildServer {
-    pub fn new<I>(host:I, port: u32, domain: I)  -> Self
-    where I: Into<String>
-    {
-        Self {
-            host: host.into(),
-            port,
-            domain: domain.into(),
-        }
-    }
-}
-
-impl Default for BuildServer {
-    fn default() -> Self {
-        Self::new(BUILD_SERVER, BUILD_SERVER_PORT, BUILD_DOMAIN)
-    }
-}
-
-pub fn make_request(req: &BuildRequest) -> Result<reqwest::Response,reqwest::Error> {
-    let client = reqwest::Client::new();
-
-    let res = client.post(req.repo.as_str())
-    .json(req)
-    .send();
-    res
-}
 
 // project   houdini_submission
 // version   5.4.0
@@ -102,6 +46,8 @@ pub fn make_request(req: &BuildRequest) -> Result<reqwest::Response,reqwest::Err
 // scmType   svn
 // repo      http://dd-svn.d2.com/svn/software/packages/houdini_submission
 // platform  Cent7_64
+
+
 
 #[cfg(test)]
 mod tests {

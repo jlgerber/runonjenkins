@@ -3,3 +3,7 @@ pub use vcs_system::VcsSystem;
 pub mod build_request;
 pub use build_request::*;
 pub mod constants;
+pub mod build_server;
+pub use build_server::BuildServer;
+pub mod platform;
+pub use platform::Platform;

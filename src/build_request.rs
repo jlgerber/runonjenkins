@@ -125,7 +125,7 @@ mod tests {
                 version: "5.4.0".to_string(),
                 flavor: "^".to_string(),
                 scm_type: VcsSystem::Svn,
-                 repo: Url::from_str("http://dd-svn.d2.com/svn/software/packages/houdini_submission").unwrap(),
+                 repo: "http://dd-svn.d2.com/svn/software/packages/houdini_submission".to_string(),
                  platform: Platform::Cent6,
             })
         )

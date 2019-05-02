@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-#[derive(Debug,PartialEq,PartialOrd,Eq,Ord, Serialize, Deserialize)]
+#[derive(Debug,PartialEq,PartialOrd,Eq,Ord, Serialize, Deserialize,Clone)]
 pub enum Platform {
     Cent6,
     Cent7,

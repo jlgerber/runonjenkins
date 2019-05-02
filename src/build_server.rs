@@ -36,7 +36,7 @@ impl BuildServer {
         // TODO fix errors
         let route = self.request_route().unwrap();
         let res = client.post(route)
-        .json(req)
+        .json(&req.to_build_params())
         .send();
         res
     }

@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
 
-#[derive(Debug,PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize)]
+#[derive(Debug,PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize,Clone)]
 pub enum VcsSystem {
     Svn,
     Git,

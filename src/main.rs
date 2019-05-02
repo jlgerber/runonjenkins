@@ -1,12 +1,7 @@
 
-/*
-curl -X POST
-http://pd-docker-nd-08.d2.com:5000/view/DDPipeline/job/Plans/job/BuildTagPipeline/build
---data-urlencode json='{"parameter": [{"name":"project", "value":"houdini_submission"}]}'
- */
 
 use yamly::*;
-
+use std::io::Read;
 use serde_yaml ;
 use serde::{Deserialize, };
 use std::collections::BTreeMap ;
@@ -29,18 +24,20 @@ requires:
     bar: '2.0.0+'
 "#;
 
-fn parse() {
- let result: ManifestMap = serde_yaml::from_reader(VAL.as_bytes()).unwrap();
- if let YamlValue::String(ref name) = result["name"] {
-    println!("name {}", name);
- }
-    let res: Manifest = serde_yaml::from_reader(VAL.as_bytes()).unwrap();
-    println!("{:?}", res);
- // println!("{:?}", result["name"]);
-
- //println!("{:?}", result);
+pub enum ManifestType {
+    Str(&'static str),
+    File(String),
 }
+
+fn package_from_manifest(manifest: &str) -> Option<String> {
+    match serde_yaml::from_reader(manifest.as_bytes()){
+        Ok(val) => Some(val),
+        Err(_) => None
+    }
+}
+
+
 fn main() {
-    parse();
-    println!("Hello, world!");
+    let some_package = package_from_manifest(VAL);
+    println!("{:?}", some_package);
 }

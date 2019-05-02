@@ -8,10 +8,11 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use crate::VcsSystem;
 use crate::Platform;
+use crate::constants::PARAM_CNT;
 
-
-#[derive(Debug, PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(untagged)]
+/// An enumeration of possible build parameter types. These include string, platform, url, and vcs system.
 pub enum BuildParamType {
     String(String),
     Platform(Platform),
@@ -19,19 +20,18 @@ pub enum BuildParamType {
     Vcs(VcsSystem),
 }
 
+// From conversions for BuildParamType
 impl <'a> From<&'a str> for BuildParamType {
     fn from(value: &'a str) -> BuildParamType {
         BuildParamType::String(value.to_string())
     }
 }
 
-
 impl  From<String> for BuildParamType {
     fn from(value: String) -> BuildParamType {
         BuildParamType::String(value)
     }
 }
-
 
 impl  From<Url> for BuildParamType {
     fn from(value: Url) -> BuildParamType {
@@ -45,15 +45,16 @@ impl From<Platform> for BuildParamType {
     }
 }
 
-
 impl From<VcsSystem> for BuildParamType {
     fn from(value: VcsSystem) -> BuildParamType {
         BuildParamType::Vcs(value)
     }
 }
 
-#[derive(Debug, PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+/// An intermediate struct whose need is strictly dictated by the expected json
+/// request's form. This struct diefines a name for a parameter and a value separately.
 pub struct BuildParameter {
     pub name: String,
     pub value: BuildParamType
@@ -71,21 +72,29 @@ impl BuildParameter {
         }
 }
 
-#[derive(Debug, PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BuildParameters {
     pub parameter:Vec<BuildParameter>
 }
 
 impl BuildParameters {
+    /// Create a new, empty BuildParameters struct.
     pub fn new() -> Self {
         Self{
-            parameter: Vec::new()
+            parameter: Vec::with_capacity(PARAM_CNT)
         }
+    }
+
+    /// Push a BuildParameter instance into the BuildParameters struct
+    pub fn push(&mut self, value: BuildParameter) {
+        self.parameter.push(value);
     }
 }
 
 #[derive(Debug, PartialEq,PartialOrd,Eq,Ord)]
+/// The user facing request object. This is converted to the more cumbersome BuildParameters
+/// object in order to serialize to json for the actual build request.
 pub struct BuildRequest {
     project: String,
     version: String,
@@ -96,6 +105,7 @@ pub struct BuildRequest {
 }
 
 impl BuildRequest {
+    /// Generate a new BuildRequest
     pub fn new<'a,T,P>(
         project: T,
         version: T,
@@ -130,17 +140,17 @@ impl BuildRequest {
         let scm_type = BuildParameter::new("ScmType", self.scm_type.clone());
         let platform = BuildParameter::new("platform", self.platform.clone());
 
-        params.parameter.push(project);
-        params.parameter.push(version);
-        params.parameter.push(flavor);
-        params.parameter.push(repo);
-        params.parameter.push(scm_type);
-        params.parameter.push(platform);
+        params.push(project);
+        params.push(version);
+        params.push(flavor);
+        params.push(repo);
+        params.push(scm_type);
+        params.push(platform);
 
         params
-
     }
 }
+
 
 
 #[cfg(test)]
@@ -188,3 +198,4 @@ mod tests {
     }
 }
 
+// pk manifest --falvours --jason=1

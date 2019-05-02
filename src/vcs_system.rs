@@ -12,7 +12,6 @@ pub enum VcsSystem {
 }
 
 impl <'a> From<&'a str> for VcsSystem {
-
     fn from(value: &'a str) -> Self {
         match value.to_lowercase().as_str() {
             "svn"  => VcsSystem::Svn,

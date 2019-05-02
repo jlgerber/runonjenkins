@@ -1,3 +1,8 @@
+//!
+//! BuildRequest
+//!
+//! A BuildRequest models the data needed to trigger a build on jenkins. It includes the
+//! project, the version, the flavor, teh repo, teh scm type
 use url::{Url, ParseError};
 use std::str::FromStr;
 use serde::{Deserialize, Serialize};
@@ -5,6 +10,7 @@ use crate::VcsSystem;
 use crate::Platform;
 
 #[derive(Debug, PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BuildRequest {
     project: String,
     version: String,

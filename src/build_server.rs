@@ -26,7 +26,7 @@ impl BuildServer {
 
     // generate a request route
     pub(crate) fn request_route(&self) -> Option<Url> {
-        match Url::from_str(format!("{}.{}:{}/{}",self.host, self.domain, self.port, BUILD_ROUTE).as_str()) {
+        match Url::from_str(format!("http://{}.{}:{}/{}",self.host, self.domain, self.port, BUILD_ROUTE).as_str()) {
             Ok(e) => Some(e),
             Err(_) => None
         }

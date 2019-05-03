@@ -46,10 +46,11 @@ impl BuildServer {
         let route = route.unwrap();
         println!("requesting on route {:?}", route);
         println!("build parameters");
-        let j = serde_json::to_string(&req.to_build_params());
+        let j = serde_json::to_string(&req.to_build_params()).unwrap();
         println!("{:?}",j);
         let res = client.post(route)
-        .json(&req.to_build_params())
+       // .json(&req.to_build_params())
+       .body(j)
         .send();
         match res {
             Ok(a) => Ok(a),

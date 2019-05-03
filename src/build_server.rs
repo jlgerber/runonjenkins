@@ -34,13 +34,17 @@ impl BuildServer {
 
     /// Request a build from the build server
     pub fn request(&self, req: &BuildRequest) -> Result<reqwest::Response, failure::Error> {
+
         let client = reqwest::Client::new();
+
         // TODO fix errors
         let route = self.request_route();
         if route.is_none() {
             bail!("Unable to call.request_route");
         }
         let route = route.unwrap();
+        println!("requesting on route {:?}", route);
+
         let res = client.post(route)
         .json(&req.to_build_params())
         .send();

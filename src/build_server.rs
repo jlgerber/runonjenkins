@@ -48,12 +48,21 @@ impl BuildServer {
         println!("build parameters");
         let j = serde_json::to_string(&req.to_build_params()).unwrap();
         println!("{:?}",j);
-        let res = client.post(route)
-       // .json(&req.to_build_params())
-       .body(j)
+        let mut res = client.post(route)
+        .json(&req.to_build_params())
         .send();
+
         match res {
-            Ok(a) => Ok(a),
+            Ok(res) => {
+
+                println!("Status: {}", res.status());
+                println!("Headers:\n{:?}", res.headers());
+
+                // copy the response body directly to stdout
+                std::io::copy(&mut res, &mut std::io::stdout())?;
+
+                Ok(res)
+            },
             Err(e) => bail!("{}", e)
         }
     }

@@ -1,7 +1,6 @@
-use pkg_build_remote::{ get_flavors, Svn, Git, Minifest, VcsSystem};
+use pkg_build_remote::{ get_flavors, Svn, Git, Minifest, BuildRequest, Platform, VcsSystem};
 use std::env;
 use structopt::StructOpt;
-use std::path::Path;
 use std::env::current_dir;
 
 #[derive(StructOpt, Debug)]
@@ -13,7 +12,10 @@ struct Opt {
     #[structopt(short = "v", long = "vcs")]
     vcs: Option<String>,
 
-    /// Set speed
+    #[structopt(short = "f", long = "flavours", default_value="^")]
+    flavors: String,
+
+    /// Set dry run
     #[structopt(short = "d", long = "dry-run")]
     dry_run: bool,
 
@@ -50,9 +52,32 @@ fn identify_vcs(selection: &Option<String>) -> Option<VcsSystem> {
     None
 }
 
+fn parse_flavors(flavor: &str) -> Vec<&str> {
+    flavor.split(",").collect::<Vec<&str>>()
+}
+
+/*
+pub fn new<'a,T,P>(
+        project: T,
+        version: T,
+        flavor:  T,
+        repo:   &'a str,
+        scm_type: impl Into<VcsSystem>,
+        platform: P
+    )-> Result<Self, ParseError>
+*/
+
+fn build_requests(minifest: &Minifest, repo: &str, scm_type: &VcsSystem, platform: &Platform, flavors: &Vec<&str>) ->Vec<BuildRequest> {
+    let mut build_reqs = Vec::with_capacity(flavors.len());
+    for flav in flavors{
+        build_reqs.push(BuildRequest::new(minifest.name.as_str(), minifest.version.as_str(), flav, repo, scm_type, platform).unwrap());
+    }
+
+    build_reqs
+}
 
 fn main() -> Result<(), failure::Error>{
-    let mut opts = Opt::from_args();
+    let opts = Opt::from_args();
 
     let vcs = identify_vcs(&opts.vcs);
 
@@ -62,22 +87,25 @@ fn main() -> Result<(), failure::Error>{
     }
     let vcs = vcs.unwrap();
 
+    let flavors = parse_flavors(&opts.flavors);
+
     // get minifest
     let minifest = Minifest::from_disk()?;
     println!("{:?}", minifest);
     match vcs {
-
         VcsSystem::Svn => {
-            // identify version and name ursl
-            // minifest
-
-            let remotes = Svn::get_url("1.2.3");
+            let remotes = Svn::get_url(minifest.version.as_str());
             println!("{:?}", remotes);
         },
          VcsSystem::Git => {
             let cwd = env::current_dir()?;
-            let remotes = Git::get_remotes(cwd.to_str().unwrap());
+            let remotes = Git::get_remotes(cwd.to_str().unwrap())?;
             println!("{:?}", remotes);
+            let build_reqs = build_requests(&minifest, remotes[0].as_str(), &VcsSystem::Git, &Platform::Cent7,&flavors);
+            for br in build_reqs {
+                println!("{:?}", br);
+            }
+
         }
         _ => {
             println!("choose svn or git");
@@ -86,14 +114,6 @@ fn main() -> Result<(), failure::Error>{
     }
 
 
-
-
-    /*
-    let flavors = get_flavors()?;
-    println!("flavors: {:?}", flavors);
-    let mini = get_minifest()?;
-    println!("{:?}", mini);
-    */
     Ok(())
 }
 

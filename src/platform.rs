@@ -16,3 +16,10 @@ impl<'a> From<&'a str> for Platform {
         }
     }
 }
+
+
+impl<'a> From<&'a Platform> for Platform {
+    fn from(value: &'a Platform) -> Platform {
+       value.clone()
+    }
+}

@@ -23,3 +23,21 @@ impl <'a> From<&'a str> for VcsSystem {
         }
     }
 }
+
+
+impl <'a> From<&'a VcsSystem> for VcsSystem {
+    fn from(value: &'a VcsSystem) -> Self {
+       value.clone()
+    }
+}
+
+
+/*
+
+impl  pkg_build_remote<String> for BuildParamType {
+    fn from(value: String) -> BuildParamType {
+        BuildParamType::String(value)
+    }
+}
+
+*/

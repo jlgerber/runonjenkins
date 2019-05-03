@@ -11,14 +11,14 @@ fn _get_minifest() -> Result<impl Iterator<Item=String>, failure::Error> { r#"
 #[cfg(target_os = "macos")]
 #[shell]
 fn _get_minifest_from_grep() -> Result<impl Iterator<Item=String>, failure::Error> { r#"
-    gfind . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -E '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
+    gfind . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
 "#
 }
 
 #[cfg(target_os = "linux")]
 #[shell]
 fn _get_minifest_from_grep() -> Result<impl Iterator<Item=String>, failure::Error> { r#"
-    find . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -E '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
+    find . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
 "#
 }
 
@@ -47,7 +47,7 @@ impl Minifest {
 
         for attr in attrs {
             let mut results = attr.split(":");
-            let key = results.next().unwrap();
+            let key = results.next().unwrap().to_lowercase();
             if key == "name" {
                 name = results.next().unwrap().to_string();
             }else if key == "version" {

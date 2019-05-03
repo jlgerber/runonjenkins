@@ -53,7 +53,7 @@ impl BuildServer {
         .send();
 
         match res {
-            Ok(res) => {
+            Ok(mut res) => {
 
                 println!("Status: {}", res.status());
                 println!("Headers:\n{:?}", res.headers());

@@ -99,7 +99,7 @@ fn main() -> Result<(), failure::Error>{
         VcsSystem::Svn => {
             let remotes = Svn::get_url(minifest.version.as_str())?;
             println!("{:#?}", remotes);
-            let build_reqs = build_requests(&minifest, remotes.as_str(), &VcsSystem::Git, &Platform::Cent7,&flavors);
+            let build_reqs = build_requests(&minifest, remotes.as_str(), &VcsSystem::Svn, &Platform::Cent7,&flavors);
             for br in build_reqs {
                 println!("{:#?}", br);
             }

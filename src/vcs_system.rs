@@ -15,7 +15,7 @@ impl <'a> From<&'a str> for VcsSystem {
 
     fn from(value: &'a str) -> Self {
         match value.to_lowercase().as_str() {
-            "svn"  => VcsSystem::Svn,
+            "svn"              => VcsSystem::Svn,
             "git"  | "gitlab"  => VcsSystem::Git,
             "mercurial"        => VcsSystem::Mercurial,
             "perforce"         => VcsSystem::Perforce,

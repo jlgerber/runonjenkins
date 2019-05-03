@@ -107,7 +107,7 @@ fn main() -> Result<(), failure::Error>{
                 if opts.dry_run {
                     println!("dry_run mode");
                     println!("route {:?}", build_server.request_route());
-                    println!("{:#?}", br.to_build_params());
+                    println!("build params: {:#?}", br.to_build_params());
                 } else {
                 let _results = build_server.request(&br)?;
                 }
@@ -123,7 +123,8 @@ fn main() -> Result<(), failure::Error>{
 
                 if opts.dry_run {
                     println!("dry_run mode");
-                    println!("{:#?}", br.to_build_params());
+                    println!("route {:?}", build_server.request_route());
+                    println!("build params: {:#?}", br.to_build_params());
                 } else {
                 let _results = build_server.request(&br)?;
                 }

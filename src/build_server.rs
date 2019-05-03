@@ -2,6 +2,7 @@ use std::default::Default;
 use url::Url;
 use std::str::FromStr;
 use failure::bail;
+use serde_json;
 
 use crate::build_request::BuildRequest;
 use crate::constants::*;
@@ -44,7 +45,9 @@ impl BuildServer {
         }
         let route = route.unwrap();
         println!("requesting on route {:?}", route);
-
+        println!("build parameters");
+        let j = serde_json::to_string(&req.to_build_params());
+        println!("{:?"},j);
         let res = client.post(route)
         .json(&req.to_build_params())
         .send();

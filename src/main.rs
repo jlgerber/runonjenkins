@@ -106,7 +106,7 @@ fn main() -> Result<(), failure::Error>{
                 println!("{:#?}", br);
                 if opts.dry_run {
                     println!("dry_run mode");
-                    println!("route {:?}", buidl_server.request_route());
+                    println!("route {:?}", build_server.request_route());
                     println!("{:#?}", br.to_build_params());
                 } else {
                 let _results = build_server.request(&br)?;

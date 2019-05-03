@@ -102,6 +102,9 @@ fn main() -> Result<(), failure::Error>{
             let build_reqs = build_requests(&minifest, remotes.as_str(), &VcsSystem::Svn, &Platform::Cent7,&flavors);
             for br in build_reqs {
                 println!("{:#?}", br);
+                let build_params = br.to_build_params();
+                println!("build params");
+                println!("{:?}", build_params);
             }
         },
          VcsSystem::Git => {
@@ -111,6 +114,9 @@ fn main() -> Result<(), failure::Error>{
             let build_reqs = build_requests(&minifest, remotes[0].as_str(), &VcsSystem::Git, &Platform::Cent7,&flavors);
             for br in build_reqs {
                 println!("{:#?}", br);
+                let build_params = br.to_build_params();
+                println!("build params");
+                println!("{:?}", build_params);
             }
 
         }

@@ -1,4 +1,4 @@
-use pkg_build_remote::{ get_flavors, Svn, Git, Minifest, BuildRequest, Platform, VcsSystem};
+use pkg_build_remote::{ get_flavors, Svn, Git, Minifest, BuildRequest,BuildServer, Platform, VcsSystem};
 use std::env;
 use structopt::StructOpt;
 use std::env::current_dir;
@@ -92,6 +92,8 @@ fn main() -> Result<(), failure::Error>{
 
     let flavors = parse_flavors(&opts.flavors);
 
+    let build_server = BuildServer::default();
+
     // get minifest
     let minifest = Minifest::from_disk()?;
     println!("{:?}", minifest);
@@ -102,9 +104,11 @@ fn main() -> Result<(), failure::Error>{
             let build_reqs = build_requests(&minifest, remotes.as_str(), &VcsSystem::Svn, &Platform::Cent7,&flavors);
             for br in build_reqs {
                 println!("{:#?}", br);
-                let build_params = br.to_build_params();
-                println!("build params");
-                println!("{:?}", build_params);
+                if opts.dry_run {
+                    println!("dry_run mode");
+                } else {
+                let _results = build_server.request(&br)?;
+                }
             }
         },
          VcsSystem::Git => {
@@ -114,9 +118,12 @@ fn main() -> Result<(), failure::Error>{
             let build_reqs = build_requests(&minifest, remotes[0].as_str(), &VcsSystem::Git, &Platform::Cent7,&flavors);
             for br in build_reqs {
                 println!("{:#?}", br);
-                let build_params = br.to_build_params();
-                println!("build params");
-                println!("{:?}", build_params);
+
+                if opts.dry_run {
+                    println!("dry_run mode");
+                } else {
+                let _results = build_server.request(&br)?;
+                }
             }
 
         }

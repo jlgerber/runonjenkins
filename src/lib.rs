@@ -12,7 +12,7 @@ pub use errors::*;
 pub mod flavor;
 pub use flavor::get_flavors;
 pub mod minifest;
-pub use minifest::{Minifest, get_minifest};
+pub use minifest::{Minifest};
 pub mod svn;
 pub use svn::Svn;
 pub mod git;

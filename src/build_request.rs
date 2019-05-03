@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::VcsSystem;
 use crate::Platform;
 use crate::constants::PARAM_CNT;
-
+use crate::RouteError;
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(untagged)]
 /// An enumeration of possible build parameter types. These include string, platform, url, and vcs system.
@@ -94,7 +94,7 @@ impl BuildParameters {
 
 #[derive(Debug, PartialEq,PartialOrd,Eq,Ord)]
 /// The user facing request object. This is converted to the more cumbersome BuildParameters
-/// object in order to serialize to json for the actual build request.
+/// object in order to serialize to json for the actual build request POST.
 pub struct BuildRequest {
     project: String,
     version: String,
@@ -105,6 +105,7 @@ pub struct BuildRequest {
 }
 
 impl BuildRequest {
+
     /// Generate a new BuildRequest
     pub fn new<'a,T,P>(
         project: T,

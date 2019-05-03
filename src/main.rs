@@ -94,8 +94,12 @@ fn main() -> Result<(), failure::Error>{
     println!("{:?}", minifest);
     match vcs {
         VcsSystem::Svn => {
-            let remotes = Svn::get_url(minifest.version.as_str());
+            let remotes = Svn::get_url(minifest.version.as_str())?;
             println!("{:?}", remotes);
+            let build_reqs = build_requests(&minifest, remotes.as_str(), &VcsSystem::Git, &Platform::Cent7,&flavors);
+            for br in build_reqs {
+                println!("{:?}", br);
+            }
         },
          VcsSystem::Git => {
             let cwd = env::current_dir()?;

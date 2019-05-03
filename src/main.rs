@@ -95,19 +95,19 @@ fn main() -> Result<(), failure::Error>{
     match vcs {
         VcsSystem::Svn => {
             let remotes = Svn::get_url(minifest.version.as_str())?;
-            println!("{:?}", remotes);
+            println!("{:#?}", remotes);
             let build_reqs = build_requests(&minifest, remotes.as_str(), &VcsSystem::Git, &Platform::Cent7,&flavors);
             for br in build_reqs {
-                println!("{:?}", br);
+                println!("{:#?}", br);
             }
         },
          VcsSystem::Git => {
             let cwd = env::current_dir()?;
             let remotes = Git::get_remotes(cwd.to_str().unwrap())?;
-            println!("{:?}", remotes);
+            println!("{:#?}", remotes);
             let build_reqs = build_requests(&minifest, remotes[0].as_str(), &VcsSystem::Git, &Platform::Cent7,&flavors);
             for br in build_reqs {
-                println!("{:?}", br);
+                println!("{:#?}", br);
             }
 
         }

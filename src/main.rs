@@ -38,13 +38,16 @@ fn is_svn() -> bool {
 fn identify_vcs(selection: &Option<String>) -> Option<VcsSystem> {
     match selection {
         Some(val) => {
+            println!("vcs predefined");
             return Some(VcsSystem::from(val.as_str()))
         }
         None => {
             if is_git() {
+                println!("git found");
                 return Some(VcsSystem::from("git"));
             }
             if is_svn() {
+                println!("svn found");
                 return Some(VcsSystem::from("svn"))
             }
         }

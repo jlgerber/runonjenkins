@@ -47,7 +47,7 @@ impl BuildServer {
         println!("requesting on route {:?}", route);
         println!("build parameters");
         let j = serde_json::to_string(&req.to_build_params());
-        println!("{:?"},j);
+        println!("{:?}",j);
         let res = client.post(route)
         .json(&req.to_build_params())
         .send();

@@ -1,4 +1,4 @@
-use yamly::*;
+use pkg_build_remote::*;
 
 use shellfn::shell;
 use std::error::Error;
@@ -151,7 +151,7 @@ fn main() -> Result<(), Box<Error>>{
             println!("choose svn or git");
         }
     } else {
-        println!("usage: yamly svn|git")
+        println!("usage: pkg_build_remote svn|git")
     }
 
     let flavors = get_flavors()?;

@@ -42,6 +42,7 @@ fn _get_mini_mani() -> Result<impl Iterator<Item=String>, Box<Error>> { r#"
 "#
 }
 
+#[derive(Debug)]
 /// The mini manifest - just the name and version because that is all we need.
 pub struct MiniMani {
     pub name:    String,
@@ -76,7 +77,7 @@ pub struct Svn;
 impl Svn {
 
     /// Get the svn url from the manifest
-    pub fn get_svn_url(version: &str) -> Result<String, Box<Error>> {
+    pub fn get_url(version: &str) -> Result<String, Box<Error>> {
         let url = _get_svn_url()?;
         if url.len() == 0 {
             Err(ShellFnError("unable to get svn url".to_string()).into())
@@ -138,9 +139,26 @@ impl error::Error for ShellFnError {
 //
 
 fn main() -> Result<(), Box<Error>>{
-    //let flavors = get_flavors()?;
-    let remotes = Git::get_remote_urls();
-    println!("{:?}", remotes);
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() > 1 {
+        if args[1] == "svn" {
+            let remotes = Svn::get_url("1.2.3");
+            println!("{:?}", remotes);
+        } else if args[1] == "git" {
+            let remotes = Git::get_remote_urls();
+            println!("{:?}", remotes);
+        } else {
+            println!("choose svn or git");
+        }
+    } else {
+        println!("usage: yamly svn|git")
+    }
+
+    let flavors = get_flavors()?;
+    println!("flavors: {:?}", flavors);
+    let mini = get_mini_mani()?;
+    println!("{:?}", mini);
+
     Ok(())
 }
 

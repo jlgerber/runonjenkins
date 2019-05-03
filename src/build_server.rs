@@ -54,9 +54,9 @@ impl BuildServer {
 
         match res {
             Ok(mut res) => {
+                println!("Headers:\n{:#?}", res.headers());
 
-                println!("Status: {}", res.status());
-                println!("Headers:\n{:?}", res.headers());
+                println!("Status: {}\n", res.status());
 
                 // copy the response body directly to stdout
                 std::io::copy(&mut res, &mut std::io::stdout())?;

@@ -50,6 +50,7 @@ impl BuildServer {
         println!("{:?}",j);
         let mut res = client.post(route)
         .json(&req.to_build_params())
+        .header("Content-Type", "application/json")
         .send();
 
         match res {

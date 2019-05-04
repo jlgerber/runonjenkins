@@ -19,3 +19,31 @@ impl fmt::Display for RouteError {
         write!(f, "Problem with route: {}", self.0)
     }
 }
+
+#[derive(Fail, Debug)]
+pub enum RemoteBuildError {
+    #[fail(display = "Input was invalid UTF-8 at index {}", _0)]
+    Utf8Error(usize),
+    #[fail(display = "{}", _0)]
+    Io(#[fail(cause)] std::io::Error),
+    #[fail(display = "ConversionError: {}", _0)]
+    ConversionError(String),
+    #[fail(display = "None")]
+    NoneError,
+}
+
+
+// make sure that we can convert from a reference to self
+impl From<std::io::Error> for RemoteBuildError {
+    fn from(value: std::io::Error) -> Self {
+       RemoteBuildError::Io(value)
+    }
+}
+
+
+// // make sure that we can convert from a reference to self
+// impl From<std::option::NoneError> for RemoteBuildError {
+//     fn from(value: std::option::NoneError) -> Self {
+//        RemoteBuildError::NoneError
+//     }
+// }

@@ -50,7 +50,7 @@ impl BuildServer {
         println!("build parameters");
         let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
         println!("params");
-        println!("{:?", params);
+        println!("{:?}", params);
         let res = client.post(route)
         .header(
             CONTENT_TYPE,

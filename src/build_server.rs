@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use reqwest::{header::HeaderValue, header::CONTENT_TYPE,};
 use crate::build_request::BuildRequest;
 use crate::constants::*;
+use url::form_urlencoded::{byte_serialize, parse};
 
 pub struct BuildServer {
     host: String,
@@ -49,6 +50,8 @@ impl BuildServer {
         println!("requesting on route {:?}", route);
         println!("build parameters");
         let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
+        let j: String = byte_serialize(req.to_build_params().as_bytes()).collect();
+
         println!("params");
         println!("{:?}", params);
         let res = client.post(route)
@@ -56,7 +59,7 @@ impl BuildServer {
             CONTENT_TYPE,
             HeaderValue::from_static("application/x-www-form-urlencoded"),
         )
-        .body(params)
+        .body(j)
         .send();
 
         match res {

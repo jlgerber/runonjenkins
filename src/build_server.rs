@@ -3,7 +3,7 @@ use url::Url;
 use std::str::FromStr;
 use failure::bail;
 use serde_json;
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 
 use crate::build_request::BuildRequest;
 use crate::constants::*;
@@ -39,7 +39,7 @@ impl BuildServer {
 
         let client = reqwest::Client::new();
 
-        let mut btmap = BTreeMap::new();
+        let mut btmap = HashMap::new();
         btmap.insert("Foo".to_string(), "bar".to_string());
         // TODO fix errors
         let route = self.request_route();
@@ -56,7 +56,7 @@ impl BuildServer {
         let mut res = client.post(route)
         //.json(&req.to_build_params())
         .json(&btmap)
-        .header("Content-Type", "application/json")
+        //.header("Content-Type", "application/json")
         .send();
 
         match res {

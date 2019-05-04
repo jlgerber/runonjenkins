@@ -1,16 +1,31 @@
-use std::default::Default;
-use url::Url;
-use std::str::FromStr;
+use crate::{
+    build_request::BuildRequest,
+    constants::*,
+};
 use failure::bail;
-use std::collections::HashMap;
-use reqwest::{header::HeaderValue, Request, Response, header::CONTENT_TYPE,};
-use crate::build_request::BuildRequest;
-use crate::constants::*;
-use url::form_urlencoded::{byte_serialize, parse};
+use reqwest::{
+    header::HeaderValue,
+    Request,
+    header::CONTENT_TYPE,
+};
+use std::{
+    default::Default,
+    str::{
+        FromStr,
+    },
+};
+use url::{
+    Url,
+    percent_encoding::{
+            utf8_percent_encode,
+            USERINFO_ENCODE_SET
+        }
+};
 
-use url::percent_encoding::{utf8_percent_encode, percent_decode, USERINFO_ENCODE_SET};
-use std::str::Utf8Error;
-
+/// A struct used to conncet with the build server, it stores
+/// attributes necessary to make a connection and provides methods
+/// to interact with the server, including the ability to request
+/// a build.
 pub struct BuildServer {
     host: String,
     port: u32,
@@ -19,8 +34,19 @@ pub struct BuildServer {
 
 
 impl BuildServer {
+
     /// New up a BuildServer. The BuildServer holds information that
     /// allows us to connect to the actual build server.
+    ///
+    /// # Parameters
+    ///
+    /// * `host` - The name of the host, sans the domain.
+    /// * `port` - The port number
+    /// * `domain` - The domain name.
+    ///
+    /// # Returns
+    ///
+    /// A new instance of BuildServer
     pub fn new<I>(host:I, port: u32, domain: I)  -> Self
     where I: Into<String>
     {
@@ -31,7 +57,14 @@ impl BuildServer {
         }
     }
 
-    // generate a request route
+    /// Attempt to generate a url to make a build request, assembling the vrarious
+    /// components necessary to build this Url.
+    ///
+    /// # Returns
+    ///
+    /// A Url instance that may be invoked to request a build on the server. This
+    /// method is generally used by the request_build method and is exposed publicly
+    /// for visualization purposes.
     pub fn request_route(&self) -> Option<Url> {
         match Url::from_str(format!("http://{}.{}:{}/{}", self.host, self.domain, self.port, BUILD_ROUTE).as_str()) {
             Ok(e) => Some(e),
@@ -60,7 +93,7 @@ impl BuildServer {
     /// * `req` - an instance of BuildRequest which stores the user's job's information
     /// * `verbose` - should we print out info to stdout about the query
     /// * `dry_run` - are we simply fooling around or do we want to get stuff done?
-    pub fn request(
+    pub fn request_build(
         &self,
         req: &BuildRequest,
         verbose: bool,

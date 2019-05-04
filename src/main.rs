@@ -104,7 +104,7 @@ fn main() -> Result<(), failure::Error>{
                     println!("route {:?}", build_server.request_route());
                     println!("build params: {:#?}", br.to_build_params());
                 } else {
-                let _results = build_server.request(&br, opts.verbose, opts.dry_run)?;
+                let _results = build_server.request_build(&br, opts.verbose, opts.dry_run)?;
                 }
             }
         },
@@ -123,7 +123,7 @@ fn main() -> Result<(), failure::Error>{
                     println!("route {:?}", build_server.request_route());
                     println!("build params: {:#?}", br.to_build_params());
                 } else {
-                let _results = build_server.request(&br, opts.verbose, opts.dry_run)?;
+                let _results = build_server.request_build(&br, opts.verbose, opts.dry_run)?;
                 }
             }
 

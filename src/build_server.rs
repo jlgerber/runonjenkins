@@ -3,7 +3,7 @@ use url::Url;
 use std::str::FromStr;
 use failure::bail;
 use std::collections::HashMap;
-use reqwest::{header::HeaderValue, Request, header::CONTENT_TYPE,};
+use reqwest::{header::HeaderValue, Request, Response, header::CONTENT_TYPE,};
 use crate::build_request::BuildRequest;
 use crate::constants::*;
 use url::form_urlencoded::{byte_serialize, parse};
@@ -19,6 +19,8 @@ pub struct BuildServer {
 
 
 impl BuildServer {
+    /// New up a BuildServer. The BuildServer holds information that
+    /// allows us to connect to the actual build server.
     pub fn new<I>(host:I, port: u32, domain: I)  -> Self
     where I: Into<String>
     {
@@ -31,12 +33,13 @@ impl BuildServer {
 
     // generate a request route
     pub fn request_route(&self) -> Option<Url> {
-        match Url::from_str(format!("http://{}.{}:{}/{}",self.host, self.domain, self.port, BUILD_ROUTE).as_str()) {
+        match Url::from_str(format!("http://{}.{}:{}/{}", self.host, self.domain, self.port, BUILD_ROUTE).as_str()) {
             Ok(e) => Some(e),
             Err(_) => None
         }
     }
 
+    // report on the request object's composition
     fn request_report(request: &Request) {
         println!("Request Information");
         println!("Request Headers");
@@ -48,56 +51,73 @@ impl BuildServer {
         println!("{:#?}", request.body());
         println!("");
     }
-    /// Request a build from the build server
-    pub fn request(&self, req: &BuildRequest) -> Result<reqwest::Response, failure::Error> {
+
+    /// Request a build from the build server, providing information per the
+    /// req
+    ///
+    /// # Parameters
+    ///
+    /// * `req` - an instance of BuildRequest which stores the user's job's information
+    /// * `verbose` - should we print out info to stdout about the query
+    /// * `dry_run` - are we simply fooling around or do we want to get stuff done?
+    pub fn request(
+        &self,
+        req: &BuildRequest,
+        verbose: bool,
+        dry_run: bool
+    ) -> Result<Option<reqwest::Response>, failure::Error> {
 
         let client = reqwest::Client::new();
 
-        let mut hmap = HashMap::new();
-        // TODO fix errors
         let route = self.request_route();
         if route.is_none() {
             bail!("Unable to call.request_route");
         }
 
         let route = route.unwrap();
-
-        //println!("requesting on route {:?}", route);
-        //let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
-        //println!("build params");
-        //println!("{:#?}", req.to_build_params() );
-
+        // convert the request to a json string
         let json = serde_json::to_string(&req.to_build_params())?;
-
+        // url encode the string
         let json: String = utf8_percent_encode(&json, USERINFO_ENCODE_SET).collect();
 
-        //let j: String = byte_serialize(json.as_bytes()).collect();
-        hmap.insert("json".to_string(), &json);
-
+        // why am i doing this instead of using client.post().json.send()?
+        // because F*&ing Jenkins doesnt understand posted json data. it wants
+        // x-www-form-urlencoded data. So we set the header manually, as well as
+        // the body. fun
         let request = client.post(route)
         .header(
             CONTENT_TYPE,
             HeaderValue::from_static("application/x-www-form-urlencoded"),
         )
-        //.form(&hmap)
         .body(format!("json={}",json))
         .build().unwrap();
-        //.send();
 
-        Self::request_report(&request);
+        if verbose || dry_run { Self::request_report(&request);}
 
-        let res = client.execute(request);
+        // execute the actual query
+        if !dry_run {
+            let res = client.execute(request);
 
-        match res {
-            Ok(mut res) => {
-                println!("Headers:\n{:#?}", res.headers());
-                println!("Status: {}\n", res.status());
-                // copy the response body directly to stdout
-                std::io::copy(&mut res, &mut std::io::stdout())?;
+            match res {
+                Ok(mut res) => {
+                    if verbose {
+                        println!("Return Headers:\n{:#?}", res.headers());
+                    }
 
-                Ok(res)
-            },
-            Err(e) => bail!("{}", e)
+                    println!("Return Status: {}\n", res.status());
+
+                    if verbose {
+                        // copy the response body directly to stdout
+                        std::io::copy(&mut res, &mut std::io::stdout())?;
+                    }
+
+                    Ok(Some(res))
+                },
+                Err(e) => bail!("{}", e)
+            }
+        } else {
+            println!("END DRY-RUN MODE");
+            Ok(None)
         }
     }
 }

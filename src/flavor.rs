@@ -28,6 +28,8 @@ fn _get_flavors(flavor_path: &str) -> Result<impl Iterator<Item=String>, failure
     cd $FLAVOR_PATH && pk manifest --flavours --json=1
 "# }
 
+/// Retrieve a list of flavors given an optional path to the
+/// base git repo.
 pub fn get_flavors(path: Option<&Path>) -> Result<Vec<String>, failure::Error> {
     let default_path = ".";
     let path = path.unwrap_or_else(|| Path::new(default_path));

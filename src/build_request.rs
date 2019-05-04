@@ -94,12 +94,12 @@ impl BuildParameters {
 }
 
 #[derive(Debug, PartialEq,PartialOrd,Eq,Ord,Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct UrlEncodeable {
     project:  String,
     version:  String,
     flavor:   String,
     repo:     String,
+    #[serde(rename = "scmType")]
     scm_type: String,
     platform: String,
 }

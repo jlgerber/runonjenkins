@@ -110,7 +110,7 @@ fn main() -> Result<(), failure::Error>{
         },
          VcsSystem::Git => {
             let cwd = env::current_dir()?;
-            let remotes = Git::get_remotes(cwd.to_str().unwrap())?;
+            let remotes = Git::get_remotes_strings(cwd.to_str().unwrap())?;
 
             if opts.verbose{ println!("{:#?}", remotes); }
 

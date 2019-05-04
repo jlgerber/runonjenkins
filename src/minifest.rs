@@ -1,38 +1,18 @@
+use crate::{ ShellFnError, RemoteBuildError };
 use shellfn::shell;
-use crate::{ShellFnError, RemoteBuildError};
-use std::path::{Path};
+use std::path::{ Path };
 
-// for some odd reason, pk manifest --field does not work with --json flag
-#[shell]
-fn _get_minifest() -> Result<impl Iterator<Item=String>, failure::Error> { r#"
-    pk manifest --field=name,version -b
-"#
-}
-
-// pk manifest is quite a bit slowe than using unix commands to grab the version
-// and name from the manifest
-#[cfg(target_os = "macos")]
-#[shell]
-fn _get_minifest_from_grep(minifest_root_dir: &str) -> Result<impl Iterator<Item=String>, failure::Error> { r#"
-    cd $MINIFEST_ROOT_DIR && gfind . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
-"#
-}
-
-#[cfg(target_os = "linux")]
-#[shell]
-fn _get_minifest_from_grep(minifest_root_dir: &str) -> Result<impl Iterator<Item=String>, failure::Error> { r#"
-    cd $MINIFEST_ROOT_DIR && find . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
-"#
-}
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord)]
-/// The mini manifest - just the name and version because that is all we need.
+/// The mini manifest - simply tracks the name and version, because that is what is relevant to us at this juncture.
 pub struct Minifest {
     pub name:    String,
     pub version: String,
 }
 
 impl Minifest {
+
+    /// New up a Minifest, given a name and version that impl Into<String>
     pub fn new<I: Into<String>>(name: I, version: I) -> Self {
         Self {
             name: name.into(),
@@ -40,7 +20,7 @@ impl Minifest {
         }
     }
 
-    /// retrieve the Minifest from disk, assuming our CWD is in a
+    /// Retrieve the Minifest from disk, assuming our CWD is in a
     /// project with a manifest.
     pub fn from_disk(path: Option<&Path>) -> Result<Minifest, failure::Error> {
         // convert path to &str
@@ -67,6 +47,30 @@ impl Minifest {
 
         Ok(Minifest::new(name,version))
     }
+}
+
+
+// for some odd reason, pk manifest --field does not work with --json flag
+#[shell]
+fn _get_minifest() -> Result<impl Iterator<Item=String>, failure::Error> { r#"
+    pk manifest --field=name,version -b
+"#
+}
+
+// pk manifest is quite a bit slowe than using unix commands to grab the version
+// and name from the manifest
+#[cfg(target_os = "macos")]
+#[shell]
+fn _get_minifest_from_grep(minifest_root_dir: &str) -> Result<impl Iterator<Item=String>, failure::Error> { r#"
+    cd $MINIFEST_ROOT_DIR && gfind . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
+"#
+}
+
+#[cfg(target_os = "linux")]
+#[shell]
+fn _get_minifest_from_grep(minifest_root_dir: &str) -> Result<impl Iterator<Item=String>, failure::Error> { r#"
+    cd $MINIFEST_ROOT_DIR && find . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
+"#
 }
 
 #[cfg(test)]
@@ -98,8 +102,6 @@ Description: Other stuff
         let _ = std::fs::remove_file(&file_path);
 
         assert_eq!(minifest, expected);
-
-
     }
 }
 

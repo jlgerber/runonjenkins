@@ -46,17 +46,33 @@ fn identify_vcs(selection: &Option<String>) -> Option<VcsSystem> {
 }
 
 fn parse_flavors(flavor: &str) -> Vec<&str> {
-    flavor.split(",").collect::<Vec<&str>>()
+    flavor.split(",").map(|x| x.trim()).collect::<Vec<&str>>()
 }
 
-fn build_requests(minifest: &Minifest, repo: &str, scm_type: &VcsSystem, platform: &Platform, flavors: &Vec<&str>) ->Vec<BuildRequest> {
+fn build_requests(
+    minifest: &Minifest,
+    repo: &str,
+    scm_type: &VcsSystem,
+    platform: &Platform,
+    flavors: &Vec<&str>
+) ->Vec<BuildRequest>
+{
     let mut build_reqs = Vec::with_capacity(flavors.len());
     for flav in flavors{
-        build_reqs.push(BuildRequest::new(minifest.name.as_str(), minifest.version.as_str(), flav, repo, scm_type, platform).unwrap());
+        build_reqs.push(
+            BuildRequest::new(
+                minifest.name.as_str(),
+                minifest.version.as_str(),
+                flav,
+                repo,
+                scm_type,
+                platform
+            ).unwrap()
+        );
     }
-
     build_reqs
 }
+
 
 fn main() -> Result<(), failure::Error>{
     let opts = Opt::from_args();
@@ -112,14 +128,12 @@ fn main() -> Result<(), failure::Error>{
                 let _results = build_server.request_build(&br, opts.verbose, opts.dry_run)?;
                 }
             }
-
         }
         _ => {
             println!("choose svn or git");
             std::process::exit(1);
         }
     }
-
 
     Ok(())
 }

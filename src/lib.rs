@@ -24,3 +24,5 @@ pub mod svn;
 pub use svn::Svn;
 pub mod git;
 pub use git::Git;
+pub mod machine_os;
+pub use machine_os::MachineOs;

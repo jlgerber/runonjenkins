@@ -39,7 +39,7 @@ impl BuildServer {
 
         let client = reqwest::Client::new();
 
-        let mut btmap = BTreeMap<String, String>::new();
+        let mut btmap = BTreeMap::new();
         btmap.insert("Foo".to_string(), "bar".to_string());
         // TODO fix errors
         let route = self.request_route();

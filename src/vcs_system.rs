@@ -2,7 +2,9 @@
 use serde::{Deserialize, Serialize};
 use std::string::ToString;
 
-#[derive(Debug,PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize,Clone)]
+
+/// An enum whose variants represent common version control systems.
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize, Clone)]
 pub enum VcsSystem {
     #[serde(rename = "svn")]
     Svn,
@@ -28,7 +30,7 @@ impl <'a> From<&'a str> for VcsSystem {
     }
 }
 
-
+// make sure that we can convert from a reference to self
 impl <'a> From<&'a VcsSystem> for VcsSystem {
     fn from(value: &'a VcsSystem) -> Self {
        value.clone()
@@ -47,12 +49,42 @@ impl ToString for VcsSystem {
     }
 }
 
-/*
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-impl  pkg_build_remote<String> for BuildParamType {
-    fn from(value: String) -> BuildParamType {
-        BuildParamType::String(value)
+    #[test]
+    fn can_build_from_str_regardless_of_case() {
+        let tests = &["git", "GiT", "svn", "SVn", "mercurial", "MercUrial", "perforce", "Perforce", "foo"] ;
+        let expected = &[
+            VcsSystem::Git, VcsSystem::Git,
+            VcsSystem::Svn, VcsSystem::Svn,
+            VcsSystem::Mercurial, VcsSystem::Mercurial,
+            VcsSystem::Perforce, VcsSystem::Perforce,
+            VcsSystem::Unknown("foo".to_string())];
+
+        tests.iter().enumerate().for_each(|(cnt, test)|{
+            assert_eq!(VcsSystem::from(*test), expected[cnt]);
+        });
+    }
+
+    #[test]
+    fn can_convert_to_string() {
+        use VcsSystem::*;
+        let tests = &[Git, Svn, Mercurial, Perforce, Unknown("Foo".to_string())];
+        let expected = &["git", "svn", "mercurial", "perforce", "unknown(Foo)"];
+        tests.iter().enumerate().for_each(|(cnt,test)|{
+            assert_eq!(test.to_string().as_str(), expected[cnt]);
+        });
+    }
+
+    #[test]
+    fn can_build_from_vcssystem_reference() {
+        use VcsSystem::*;
+        let tests = &[Git, Svn, Mercurial, Perforce, Unknown("Foo".to_string())];
+
+        tests.iter().for_each(|test|{
+            assert_eq!(VcsSystem::from(test), test.clone());
+        });
     }
 }
-
-*/

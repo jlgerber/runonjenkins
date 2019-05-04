@@ -1,7 +1,10 @@
 use shellfn::shell;
 use crate::ShellFnError;
 
-/// Query for the url of the svn server and that is about all.
+/// Query for the url of the svn server. This struct requires that
+/// the `svn` command be available on the shell to work. There are no
+/// subversion clients in Rust so we use the excellent `shellfn` crate
+/// to make quick work of this.
 pub struct Svn;
 
 impl Svn {

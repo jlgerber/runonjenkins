@@ -73,6 +73,7 @@ impl BuildParameter {
         }
 }
 
+/// Intermedite structure that stores a list of `BuildParameter`s
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BuildParameters {
@@ -97,17 +98,33 @@ impl BuildParameters {
 /// The user facing request object. This is converted to the more cumbersome BuildParameters
 /// object in order to serialize to json for the actual build request POST.
 pub struct BuildRequest {
+    /// name of the package
     project: String,
+    /// version of the package, corresponding to an extant tag in the scm
+    /// system that the package is stored in. For the build to be successful,
+    /// the package must have been tagged under the `version`.
     version: String,
+    /// package flavor. "^" is vanilla
     flavor: String,
+    /// Url to the package's repository in version control
     repo: Url,
+    /// The version control system that the package is stored in
     scm_type: VcsSystem,
+    /// The os that the package is to be built for
     platform: Platform,
 }
 
 impl BuildRequest {
 
-    /// Generate a new BuildRequest
+    /// Generate a new BuildRequest.
+    ///
+    /// # Parameters
+    ///
+    /// * `project` - Name of the package, as a type which can be converted into a String.
+    /// * `version` - Version of the package, which must also be an extant tag in the vcs.
+    /// * `flavor`  - Specific flavor we are requesting be built.
+    /// * `repo`    - Url to the project.
+    /// * `scm_type` - The type of the Version Control System that the tagged project is checked in to.
     pub fn new<'a,T,P>(
         project: T,
         version: T,
@@ -151,16 +168,6 @@ impl BuildRequest {
 
         params
     }
-
-    // pub fn to_build_urlencodeable(&self) -> UrlEncodeable {
-    //     UrlEncodeable::new(
-    //         self.project.as_str(),
-    //         self.version.as_str(),
-    //         self.flavor.as_str(),
-    //         &self.repo.to_string(),
-    //         &self.scm_type.to_string(),
-    //         &self.platform.to_string())
-    // }
 }
 
 

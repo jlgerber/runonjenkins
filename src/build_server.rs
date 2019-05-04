@@ -50,7 +50,8 @@ impl BuildServer {
         println!("requesting on route {:?}", route);
         println!("build parameters");
         let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
-        let j: String = byte_serialize(req.to_build_params().as_bytes()).collect();
+        let json = serde_json::to_string(&req.to_build_params())?;
+        let j: String = byte_serialize(json.as_bytes()).collect();
 
         println!("params");
         println!("{:?}", params);

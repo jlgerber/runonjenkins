@@ -11,7 +11,7 @@ pub struct Git;
 impl Git {
 
     // am i in a git repo
-    pub fn is_repo() -> bool{
+    pub fn is_cwd_repo() -> bool{
         let mut cwd = current_dir().unwrap();
         cwd.push(".git");
         cwd.exists()

@@ -32,11 +32,11 @@ fn identify_vcs(selection: &Option<String>) -> Option<VcsSystem> {
             return Some(VcsSystem::from(val.as_str()))
         }
         None => {
-            if Git::is_repo() {
+            if Git::is_cwd_repo() {
                 println!("git found");
                 return Some(VcsSystem::from("git"));
             }
-            if Svn::is_repo() {
+            if Svn::is_cwd_repo() {
                 println!("svn found");
                 return Some(VcsSystem::from("svn"))
             }

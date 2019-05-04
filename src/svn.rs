@@ -10,7 +10,7 @@ pub struct Svn;
 
 impl Svn {
 
-    pub fn is_repo() -> bool {
+    pub fn is_cwd_repo() -> bool {
         let mut cwd = current_dir().unwrap();
         cwd.push(".svn");
         cwd.exists()

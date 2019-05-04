@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use std::string::ToString;
 
-#[derive(Debug,PartialEq,PartialOrd,Eq,Ord, Serialize, Deserialize,Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize, Clone)]
 pub enum Platform {
     #[serde(rename = "cent6_64")]
     Cent6,
@@ -10,6 +10,9 @@ pub enum Platform {
     Unknown(String),
 }
 
+// Convert from a &str to a Platform using the Platform::from(...) syntax.
+// This also comes into play with the Into<Platform> syntax. (as Into is defined
+// generally for any types which implement From)
 impl<'a> From<&'a str> for Platform {
     fn from(value: &'a str) -> Platform {
         match value.to_lowercase().as_str() {
@@ -20,12 +23,16 @@ impl<'a> From<&'a str> for Platform {
     }
 }
 
+// Convert from a &Platform to a Platform using the Platform::from(...) syntax.
+// This also comes into play with the Into<Platform> syntax. (as Into is defined
+// generally for any types which implement From)
 impl<'a> From<&'a Platform> for Platform {
     fn from(value: &'a Platform) -> Platform {
        value.clone()
     }
 }
 
+// convert from a Platform to a string using the Platform::from(...) syntax.
 impl ToString for Platform {
     fn to_string(&self) -> String {
         match self {
@@ -33,5 +40,49 @@ impl ToString for Platform {
             Platform::Cent7        => "cent7_64".to_string(),
             Platform::Unknown(val) => format!("unknown({})",val),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn can_build_platform_from_platform_reference() {
+        use Platform::*;
+        let tests = &[Cent6, Cent7];
+        tests.iter().for_each(|test|{
+            assert_eq!(Platform::from(test), test.clone());
+        });
+    }
+
+    #[test]
+    fn can_convert_from_str() {
+        use Platform::*;
+        let tests = &[
+            "cent6_64", "cent6", "Cent6",
+            "cent7_64", "cent7", "Cent7",
+        ];
+
+        let expected = &[
+            Cent6, Cent6, Cent6,
+            Cent7, Cent7, Cent7,
+        ];
+
+        tests.iter().enumerate().for_each(|(cnt, test)| {
+            // have to dereference because `test` is a &&Platform
+            // here ----------------->
+            assert_eq!(Platform::from(*test), expected[cnt]);
+        });
+    }
+
+    #[test]
+    fn can_convert_to_string() {
+        use Platform::*;
+        let tests = &[Cent6, Cent7];
+        let expected = &["cent6_64", "cent7_64"];
+        tests.iter().enumerate().for_each(|(cnt, test)| {
+            assert_eq!(test.to_string().as_str(), expected[cnt]);
+        });
     }
 }

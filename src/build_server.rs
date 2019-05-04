@@ -8,7 +8,7 @@ use crate::build_request::BuildRequest;
 use crate::constants::*;
 use url::form_urlencoded::{byte_serialize, parse};
 
-use url::percent_encoding::{utf8_percent_encode, percent_decode, DEFAULT_ENCODE_SET};
+use url::percent_encoding::{utf8_percent_encode, percent_decode, QUERY_ENCODE_SET};
 use std::str::Utf8Error;
 
 pub struct BuildServer {
@@ -53,7 +53,7 @@ impl BuildServer {
         println!("build parameters");
         //let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
         let json = serde_json::to_string(&req.to_build_params())?;
-        let json: String = utf8_percent_encode(&json, DEFAULT_ENCODE_SET).collect();
+        let json: String = utf8_percent_encode(&json, QUERY_ENCODE_SET).collect();
 
         //let j: String = byte_serialize(json.as_bytes()).collect();
         hmap.insert("json".to_string(), &json);

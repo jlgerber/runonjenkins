@@ -3,7 +3,7 @@ use url::Url;
 use std::str::FromStr;
 use failure::bail;
 use std::collections::HashMap;
-use reqwest::{header::HeaderValue, header::CONTENT_TYPE,};
+use reqwest::{header::HeaderValue, Request, header::CONTENT_TYPE,};
 use crate::build_request::BuildRequest;
 use crate::constants::*;
 use url::form_urlencoded::{byte_serialize, parse};
@@ -37,6 +37,17 @@ impl BuildServer {
         }
     }
 
+    fn request_report(request: &Request) {
+        println!("Request Information");
+        println!("Request Headers");
+        println!("{:#?}", request.headers());
+        println!("Request URL");
+        println!("{:?}", request.url());
+        println!("");
+        println!("Request Body");
+        println!("{:#?}", request.body());
+        println!("");
+    }
     /// Request a build from the build server
     pub fn request(&self, req: &BuildRequest) -> Result<reqwest::Response, failure::Error> {
 
@@ -50,11 +61,12 @@ impl BuildServer {
         }
 
         let route = route.unwrap();
-        println!("requesting on route {:?}", route);
-        println!("build parameters");
+
+        //println!("requesting on route {:?}", route);
         //let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
-        println!("build params");
-        println!("{:#?}", req.to_build_params() );
+        //println!("build params");
+        //println!("{:#?}", req.to_build_params() );
+
         let json = serde_json::to_string(&req.to_build_params())?;
 
         let json: String = utf8_percent_encode(&json, USERINFO_ENCODE_SET).collect();
@@ -62,16 +74,19 @@ impl BuildServer {
         //let j: String = byte_serialize(json.as_bytes()).collect();
         hmap.insert("json".to_string(), &json);
 
-        println!("hmap");
-        println!("{:?}", hmap);
-        let res = client.post(route)
+        let request = client.post(route)
         .header(
             CONTENT_TYPE,
             HeaderValue::from_static("application/x-www-form-urlencoded"),
         )
         //.form(&hmap)
         .body(format!("json={}",json))
-        .send();
+        .build().unwrap();
+        //.send();
+
+        Self::request_report(&request);
+
+        let res = client.execute(request);
 
         match res {
             Ok(mut res) => {

@@ -38,8 +38,7 @@ impl BuildServer {
 
         let client = reqwest::Client::new();
 
-        let mut btmap = HashMap::new();
-        btmap.insert("Foo".to_string(), "bar".to_string());
+        let mut hmap = HashMap::new();
         // TODO fix errors
         let route = self.request_route();
         if route.is_none() {
@@ -52,6 +51,7 @@ impl BuildServer {
         let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
         let json = serde_json::to_string(&req.to_build_params())?;
         let j: String = byte_serialize(json.as_bytes()).collect();
+        hmap.insert("json".to_string(), j);
 
         println!("params");
         println!("{:?}", params);
@@ -60,7 +60,7 @@ impl BuildServer {
             CONTENT_TYPE,
             HeaderValue::from_static("application/x-www-form-urlencoded"),
         )
-        .body(j)
+        .form(&hmap)
         .send();
 
         match res {

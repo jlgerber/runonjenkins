@@ -182,15 +182,15 @@ impl BuildRequest {
         params
     }
 
-    pub fn to_build_urlencodeable(&self) -> UrlEncodeable {
-        UrlEncodeable::new(
-            self.project.as_str(),
-            self.version.as_str(),
-            self.flavor.as_str(),
-            &self.repo.to_string(),
-            &self.scm_type.to_string(),
-            &self.platform.to_string())
-    }
+    // pub fn to_build_urlencodeable(&self) -> UrlEncodeable {
+    //     UrlEncodeable::new(
+    //         self.project.as_str(),
+    //         self.version.as_str(),
+    //         self.flavor.as_str(),
+    //         &self.repo.to_string(),
+    //         &self.scm_type.to_string(),
+    //         &self.platform.to_string())
+    // }
 }
 
 

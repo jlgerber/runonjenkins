@@ -4,9 +4,13 @@ use std::string::ToString;
 
 #[derive(Debug,PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize,Clone)]
 pub enum VcsSystem {
+    #[serde(rename = "svn")]
     Svn,
+    #[serde(rename = "git")]
     Git,
+    #[serde(rename = "mercurial")]
     Mercurial,
+    #[serde(rename = "perforce")]
     Perforce,
     Unknown(String),
 }

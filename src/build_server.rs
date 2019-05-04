@@ -1,3 +1,8 @@
+
+//! build_server.rs
+//!
+//! Provides the BuildServer struct, which is used to connect to
+//! the build server and request a remote build from it.
 use crate::{
     build_request::BuildRequest,
     constants::*,
@@ -72,7 +77,7 @@ impl BuildServer {
         }
     }
 
-    // report on the request object's composition
+    // Report on the request object's composition
     fn request_report(request: &Request) {
         println!("Request Information");
         println!("Request Headers");
@@ -157,7 +162,11 @@ impl BuildServer {
 
 impl Default for BuildServer {
     fn default() -> Self {
-        Self::new(BUILD_SERVER, BUILD_SERVER_PORT, BUILD_DOMAIN)
+        Self::new(
+            BUILD_SERVER,
+            BUILD_SERVER_PORT,
+            BUILD_DOMAIN
+        )
     }
 }
 

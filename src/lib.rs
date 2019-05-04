@@ -1,3 +1,10 @@
+/*!
+# Crate pkg_uild-remote
+
+This crate provides the implementation for the  `pkg-get-remote`
+command.
+
+*/
 pub mod vcs_system;
 pub use vcs_system::VcsSystem;
 pub mod build_request;

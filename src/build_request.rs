@@ -169,7 +169,7 @@ impl BuildRequest {
         let version = BuildParameter::new("version",self.version.as_str());
         let flavor = BuildParameter::new("flavor", self.flavor.as_str());
         let repo = BuildParameter::new("repo", self.repo.clone()); //todo take 'a
-        let scm_type = BuildParameter::new("ScmType", self.scm_type.clone());
+        let scm_type = BuildParameter::new("scmType", self.scm_type.clone());
         let platform = BuildParameter::new("platform", self.platform.clone());
 
         params.push(project);

@@ -17,6 +17,7 @@ pub struct BuildServer {
     domain: String,
 }
 
+
 impl BuildServer {
     pub fn new<I>(host:I, port: u32, domain: I)  -> Self
     where I: Into<String>

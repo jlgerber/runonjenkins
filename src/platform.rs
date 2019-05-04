@@ -3,7 +3,9 @@ use std::string::ToString;
 
 #[derive(Debug,PartialEq,PartialOrd,Eq,Ord, Serialize, Deserialize,Clone)]
 pub enum Platform {
+    #[serde(rename = "cent6_64")]
     Cent6,
+    #[serde(rename = "cent7_64")]
     Cent7,
     Unknown(String),
 }

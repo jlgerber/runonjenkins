@@ -1,7 +1,11 @@
 
 use shellfn::shell;
-use serde::{Deserialize, Serialize};
-use std::iter::Iterator;
+use serde::{ Deserialize, Serialize };
+use std::{
+    iter::Iterator,
+    path::Path,
+};
+use crate::RemoteBuildError;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Flavour {

@@ -65,10 +65,10 @@ impl BuildServer {
         println!("hmap");
         println!("{:?}", hmap);
         let res = client.post(route)
-        .header(
-            CONTENT_TYPE,
-            HeaderValue::from_static("application/x-www-form-urlencoded"),
-        )
+        // .header(
+        //     CONTENT_TYPE,
+        //     HeaderValue::from_static("application/x-www-form-urlencoded"),
+        // )
         .form(&hmap)
         .send();
 

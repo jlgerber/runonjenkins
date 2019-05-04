@@ -2,12 +2,10 @@ use std::default::Default;
 use url::Url;
 use std::str::FromStr;
 use failure::bail;
-use serde_json;
 use std::collections::HashMap;
-
+use reqwest::{header::HeaderValue, header::CONTENT_TYPE,};
 use crate::build_request::BuildRequest;
 use crate::constants::*;
-use crate::RouteError;
 
 pub struct BuildServer {
     host: String,
@@ -50,19 +48,20 @@ impl BuildServer {
         let route = route.unwrap();
         println!("requesting on route {:?}", route);
         println!("build parameters");
-        let j = serde_json::to_string(&req.to_build_params()).unwrap();
+        let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
 
-        let mut res = client.post(route)
-        //.json(&req.to_build_params())
-        .form(&req.to_build_params())
+        let res = client.post(route)
+        .header(
+            CONTENT_TYPE,
+            HeaderValue::from_static("application/x-www-form-urlencoded"),
+        )
+        .body(params)
         .send();
 
         match res {
             Ok(mut res) => {
                 println!("Headers:\n{:#?}", res.headers());
-
                 println!("Status: {}\n", res.status());
-
                 // copy the response body directly to stdout
                 std::io::copy(&mut res, &mut std::io::stdout())?;
 

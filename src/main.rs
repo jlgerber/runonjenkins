@@ -1,4 +1,4 @@
-use pkg_build_remote::{ get_flavors, Svn, Git, Minifest, BuildRequest,BuildServer, Platform, VcsSystem};
+use pkg_build_remote::{Svn, Git, Minifest, BuildRequest,BuildServer, Platform, VcsSystem};
 use std::env;
 use structopt::StructOpt;
 use std::env::current_dir;

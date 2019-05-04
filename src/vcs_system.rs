@@ -1,6 +1,6 @@
 
 use serde::{Deserialize, Serialize};
-use serde_json::Result;
+use std::string::ToString;
 
 #[derive(Debug,PartialEq,PartialOrd,Eq,Ord,Serialize,Deserialize,Clone)]
 pub enum VcsSystem {
@@ -31,6 +31,17 @@ impl <'a> From<&'a VcsSystem> for VcsSystem {
     }
 }
 
+impl ToString for VcsSystem {
+    fn to_string(&self) -> String {
+        match self {
+            VcsSystem::Svn => "svn".to_string(),
+            VcsSystem::Git => "git".to_string(),
+            VcsSystem::Mercurial => "mercurial".to_string(),
+            VcsSystem::Perforce => "perforce".to_string(),
+            VcsSystem::Unknown(value) => format!("unknown({})", value),
+        }
+    }
+}
 
 /*
 

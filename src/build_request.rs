@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 use crate::VcsSystem;
 use crate::Platform;
 use crate::constants::PARAM_CNT;
-use crate::RouteError;
+use std::string::ToString;
+
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(untagged)]
 /// An enumeration of possible build parameter types. These include string, platform, url, and vcs system.
@@ -92,6 +93,36 @@ impl BuildParameters {
     }
 }
 
+#[derive(Debug, PartialEq,PartialOrd,Eq,Ord,Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UrlEncodeable {
+    project:  String,
+    version:  String,
+    flavor:   String,
+    repo:     String,
+    scm_type: String,
+    platform: String,
+}
+
+impl UrlEncodeable {
+    pub fn new <I: Into<String> >(
+        project: I,
+        version: I,
+        flavor: I,
+        repo: I,
+        scm_type: I,
+        platform: I ) -> UrlEncodeable
+    {
+        Self {
+            project: project.into(),
+            version: version.into(),
+            flavor: flavor.into(),
+            repo: repo.into(),
+            scm_type: scm_type.into(),
+            platform: platform.into(),
+        }
+    }
+}
 #[derive(Debug, PartialEq,PartialOrd,Eq,Ord)]
 /// The user facing request object. This is converted to the more cumbersome BuildParameters
 /// object in order to serialize to json for the actual build request POST.
@@ -149,6 +180,16 @@ impl BuildRequest {
         params.push(platform);
 
         params
+    }
+
+    pub fn to_build_urlencodeable(&self) -> UrlEncodeable {
+        UrlEncodeable::new(
+            self.project.as_str(),
+            self.version.as_str(),
+            self.flavor.as_str(),
+            &self.repo.to_string(),
+            &self.scm_type.to_string(),
+            &self.platform.to_string())
     }
 }
 

@@ -50,8 +50,8 @@ impl BuildServer {
         println!("build parameters");
         let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
         let json = serde_json::to_string(&req.to_build_params())?;
-        let j: String = byte_serialize(json.as_bytes()).collect();
-        hmap.insert("json".to_string(), j);
+        //let j: String = byte_serialize(json.as_bytes()).collect();
+        hmap.insert("json".to_string(), json);
 
         println!("params");
         println!("{:?}", params);

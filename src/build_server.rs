@@ -54,7 +54,7 @@ impl BuildServer {
         println!("build parameters");
         //let params = serde_urlencoded::to_string(req.to_build_urlencodeable())?;
         println!("build params");
-        println!("{}:#?}", req.to_build_params() );
+        println!("{:#?}", req.to_build_params() );
         let json = serde_json::to_string(&req.to_build_params())?;
 
         let json: String = utf8_percent_encode(&json, USERINFO_ENCODE_SET).collect();

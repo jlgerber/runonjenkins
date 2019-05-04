@@ -1,7 +1,6 @@
 use pkg_build_remote::{Svn, Git, Minifest, BuildRequest,BuildServer, Platform, VcsSystem};
 use std::env;
 use structopt::StructOpt;
-use std::env::current_dir;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "pkg-build-remote")]
@@ -25,19 +24,6 @@ struct Opt {
 
 }
 
-// am i in a git repo
-fn is_git() -> bool{
-    let mut cwd = current_dir().unwrap();
-    cwd.push(".git");
-    cwd.exists()
-}
-
-fn is_svn() -> bool {
-    let mut cwd = current_dir().unwrap();
-    cwd.push(".svn");
-    cwd.exists()
-}
-
 
 fn identify_vcs(selection: &Option<String>) -> Option<VcsSystem> {
     match selection {
@@ -46,11 +32,11 @@ fn identify_vcs(selection: &Option<String>) -> Option<VcsSystem> {
             return Some(VcsSystem::from(val.as_str()))
         }
         None => {
-            if is_git() {
+            if Git::is_repo() {
                 println!("git found");
                 return Some(VcsSystem::from("git"));
             }
-            if is_svn() {
+            if Svn::is_repo() {
                 println!("svn found");
                 return Some(VcsSystem::from("svn"))
             }

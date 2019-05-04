@@ -3,11 +3,19 @@
 //use shellfn::shell;
 //use crate::ShellFnError;
 use git2::Repository;
+use std::env::current_dir;
 
 /// Query the remote urls for a git repo, which we assume to be in the current working directory.
 pub struct Git;
 
 impl Git {
+
+    // am i in a git repo
+    pub fn is_repo() -> bool{
+        let mut cwd = current_dir().unwrap();
+        cwd.push(".git");
+        cwd.exists()
+    }
 
     /// get remote repositories for the local git repo in `path`.
     ///

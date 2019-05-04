@@ -88,7 +88,7 @@ fn main() -> Result<(), failure::Error>{
     let build_server = BuildServer::default();
 
     // get minifest
-    let minifest = Minifest::from_disk()?;
+    let minifest = Minifest::from_disk(None)?;
     println!("{:?}", minifest);
     match vcs {
         VcsSystem::Svn => {

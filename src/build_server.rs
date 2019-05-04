@@ -55,7 +55,7 @@ impl BuildServer {
             CONTENT_TYPE,
             HeaderValue::from_static("application/x-www-form-urlencoded"),
         )
-        .form(&req.to_build_urlencodeable())
+        .body(params)
         .send();
 
         match res {

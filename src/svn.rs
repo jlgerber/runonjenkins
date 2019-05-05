@@ -1,9 +1,12 @@
 use shellfn::shell;
-use crate::ShellFnError;
+use crate::{ ShellFnError, traits };
 use std::{
     env::current_dir,
     path::PathBuf,
+    path::Path,
 };
+use crate::traits::Vcs;
+use crate::RemoteBuildError;
 
 /// Query for the url of the svn server. This struct requires that
 /// the `svn` command be available on the shell to work. There are no
@@ -11,7 +14,7 @@ use std::{
 /// to make quick work of this.
 pub struct Svn;
 
-impl Svn {
+impl Vcs for Svn {
 
     /// Test to see if the current working directory houses an svn repo.
     ///
@@ -23,7 +26,7 @@ impl Svn {
     ///
     /// A bool indicating whether or not the current working directory
     /// is an svn repo or not.
-    pub fn is_cwd_repo() -> bool {
+    fn is_cwd_repo() -> bool {
         let cwd = current_dir().unwrap();
         Svn::is_repo(cwd)
     }
@@ -38,12 +41,34 @@ impl Svn {
     /// # Returns
     ///
     /// Bool - indicates whether the repo exists
-    pub fn is_repo<I: Into<PathBuf>>(pathbuf: I) -> bool {
+    fn is_repo<I: Into<PathBuf>>(pathbuf: I) -> bool {
         let mut pathbuf = pathbuf.into();
         pathbuf.push(".svn");
         pathbuf.exists()
     }
 
+ /// Get the svn url from the manifest
+    ///
+    /// # Parameters
+    ///
+    /// * None
+    ///
+    /// # Returns
+    ///
+    /// A single element vector housing the Url to the svn server.
+    fn get_server_urls(path: &Path) -> Result<Vec<url::Url>, failure::Error> {
+        // should probably unwrap this into an error
+        let url_vec = _get_svn_url(path.to_str().unwrap_or("."))?;
+        if url_vec.len() == 0 {
+            Err(ShellFnError("unable to get svn url".to_string()).into())
+        } else {
+            Ok(vec![url::Url::parse(url_vec.as_str())?])
+        }
+    }
+
+}
+
+impl Svn {
     /// Get the svn url from the manifest
     ///
     /// # Parameters
@@ -52,21 +77,19 @@ impl Svn {
     ///
     /// # Returns
     ///
-    /// A String representing the svn server's url
-    pub fn get_url(version: &str) -> Result<String, failure::Error> {
-        let url = _get_svn_url()?;
-        if url.len() == 0 {
-            Err(ShellFnError("unable to get svn url".to_string()).into())
-        } else {
-            Ok(format!("{}/{}", url, version))
-        }
+    /// A Url representing the svn server's url
+    pub fn get_url(version: &str) -> Result<url::Url, RemoteBuildError> {
+        let url = Svn::get_server_urls(Path::new("."))?;
+        let url = &url[0];
+        let url = url::Url::parse(format!("{}/{}", url.as_str(), version).as_str())?;
+        Ok(url)
     }
 }
 
 
 #[shell]
-fn _get_svn_url() -> Result<String, failure::Error> {
+fn _get_svn_url(svn_base_path: &str) -> Result<String, failure::Error> {
     r#"
-        svn info --show-item url --no-newline | sed 's/trunk/tags/'
+        cd $SVN_BASE_PATH && svn info --show-item url --no-newline | sed 's/trunk/tags/'
     "#
 }

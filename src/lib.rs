@@ -1,10 +1,11 @@
 /*!
-# Crate pkg_uild-remote
+# Crate pkg_build-remote
 
-This crate provides the implementation for the  `pkg-get-remote`
+This crate provides the implementation for the  `pkg-build-remote`
 command.
 
 */
+pub mod traits;
 pub mod vcs_system;
 pub use vcs_system::VcsSystem;
 pub mod build_request;
@@ -26,3 +27,7 @@ pub mod git;
 pub use git::Git;
 pub mod machine_os;
 pub use machine_os::MachineOs;
+
+pub mod prelude {
+    pub use super::traits;
+}

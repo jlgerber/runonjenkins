@@ -30,6 +30,10 @@ pub enum RemoteBuildError {
     ConversionError(String),
     #[fail(display = "None")]
     NoneError,
+    #[fail(display = "ParseError: {}", _0)]
+    ParseError(String),
+    #[fail(display = "FailureError: {}", _0)]
+    FailureError(String),
 }
 
 
@@ -41,6 +45,19 @@ impl From<std::io::Error> for RemoteBuildError {
 }
 
 
+// make sure that we can convert from a reference to self
+impl From<failure::Error> for RemoteBuildError {
+    fn from(value: failure::Error) -> Self {
+       RemoteBuildError::FailureError(value.to_string())
+    }
+}
+
+// make sure that we can convert from a reference to self
+impl From<url::ParseError> for RemoteBuildError {
+    fn from(value: url::ParseError) -> Self {
+       RemoteBuildError::ParseError(value.to_string())
+    }
+}
 // // make sure that we can convert from a reference to self
 // impl From<std::option::NoneError> for RemoteBuildError {
 //     fn from(value: std::option::NoneError) -> Self {

@@ -7,18 +7,24 @@ use structopt::StructOpt;
 struct Opt {
     // A flag, true if used in the command line. Note doc comment will
     // be used for the help message of the flag.
-    /// Vcs choice git | svn
+    /// The source code management system in use for the particular
+    /// project. This is optional, as pkg-build-remote will attempt to
+    /// identify the system by inspecting disk. Current choices: git | svn
     #[structopt(short = "s", long = "scm")]
     vcs: Option<String>,
-
+    /// Suppiy one or more flavours to build as a comma separated
+    /// list. By default, pkg-build-remote will attempt to build the
+    /// vanilla flavour.
     #[structopt(short = "f", long = "flavours", default_value="^")]
     flavors: String,
 
-    /// Print out information when running
+    /// Provide verbose feedback to stdout
     #[structopt(short = "v", long = "verbose")]
     verbose: bool,
 
-    /// Set dry run
+    /// When set to true, pkg-build-remote will report on its choices,
+    /// but will not actually execute a remote build. May be used to
+    /// verify input to the command.
     #[structopt(short = "d", long = "dry-run")]
     dry_run: bool,
 

@@ -14,12 +14,30 @@ pub struct Svn;
 impl Svn {
 
     /// Test to see if the current working directory houses an svn repo.
+    ///
+    /// # Parameters
+    ///
+    /// None
+    ///
+    /// # Returns
+    ///
+    /// A bool indicating whether or not the current working directory
+    /// is an svn repo or not.
     pub fn is_cwd_repo() -> bool {
         let cwd = current_dir().unwrap();
         Svn::is_repo(cwd)
     }
 
     /// Test to see if the provied directory houses an svn repo.
+    ///
+    /// # Parameters
+    ///
+    /// * `pathbuf` - The path to a directory which we intend on testing
+    ///               to see if it houses an svn repository.
+    ///
+    /// # Returns
+    ///
+    /// Bool - indicates whether the repo exists
     pub fn is_repo<I: Into<PathBuf>>(pathbuf: I) -> bool {
         let mut pathbuf = pathbuf.into();
         pathbuf.push(".svn");

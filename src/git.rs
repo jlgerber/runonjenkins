@@ -13,13 +13,30 @@ pub struct Git;
 
 impl Git {
 
-    // Test to see if the current directory houses a git repo
+    /// Test to see if the current directory houses a git repo.
+    ///
+    /// # Parameters
+    ///
+    /// None
+    ///
+    /// # Returns
+    ///
+    /// Bool indicating whether the current working directory
+    /// houses a git repo or not.
     pub fn is_cwd_repo() -> bool{
         let cwd = current_dir().unwrap();
         Git::is_repo(cwd)
     }
 
-    /// Test to see if the provied directory houses a git repo
+    /// Test to see if the provied directory houses a git repo.
+    ///
+    /// # Parameters
+    ///
+    /// * `pathbuf` - The path to the directory which we wish to test.
+    ///
+    /// # Returns
+    ///
+    /// Bool indicating whether the supplied pathbuf houses a git repo or not
     pub fn is_repo<I: Into<PathBuf>>(pathbuf: I) -> bool {
         let mut pathbuf = pathbuf.into();
         pathbuf.push(".git");

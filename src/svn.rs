@@ -1,6 +1,9 @@
 use shellfn::shell;
 use crate::ShellFnError;
-use std::env::current_dir;
+use std::{
+    env::current_dir,
+    path::PathBuf,
+};
 
 /// Query for the url of the svn server. This struct requires that
 /// the `svn` command be available on the shell to work. There are no
@@ -10,10 +13,17 @@ pub struct Svn;
 
 impl Svn {
 
+    /// Test to see if the current working directory houses an svn repo.
     pub fn is_cwd_repo() -> bool {
-        let mut cwd = current_dir().unwrap();
-        cwd.push(".svn");
-        cwd.exists()
+        let cwd = current_dir().unwrap();
+        Svn::is_repo(cwd)
+    }
+
+    /// Test to see if the provied directory houses an svn repo.
+    pub fn is_repo<I: Into<PathBuf>>(pathbuf: I) -> bool {
+        let mut pathbuf = pathbuf.into();
+        pathbuf.push(".svn");
+        pathbuf.exists()
     }
 
     /// Get the svn url from the manifest

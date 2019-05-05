@@ -59,7 +59,10 @@ fn identify_vcs(selection: &Option<String>) -> Option<VcsSystem> {
 }
 
 fn parse_flavors(flavor: &str) -> Vec<&str> {
-    flavor.split(",").map(|x| x.trim()).collect::<Vec<&str>>()
+    flavor
+    .split(",")
+    .map(|x| x.trim())
+    .collect::<Vec<&str>>()
 }
 
 fn parse_platforms(platforms: &str) -> Vec<Platform> {
@@ -67,6 +70,8 @@ fn parse_platforms(platforms: &str) -> Vec<Platform> {
     .split(",")
     .map(|x| x.trim())
     .map(|x| Platform::from(x))
+    // filter out any platforms that are unknown
+    .filter(|x| if let Platform::Unknown(_) = x { false } else { true } )
     .collect::<Vec<Platform>>()
 }
 
@@ -94,7 +99,6 @@ fn build_requests(
     build_reqs
 }
 
-//fn trigger_requests(minifest: &Minifest, vcs: &VcsSystem, platforms: &str, )
 fn main() -> Result<(), failure::Error> {
     let opts = Opt::from_args();
 

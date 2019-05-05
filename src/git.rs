@@ -1,6 +1,6 @@
 //use shellfn::shell;
 //use crate::ShellFnError;
-use crate::traits;
+use crate::prelude::*;
 use failure;
 use git2::Repository;
 use std::{env::current_dir, path::Path, path::PathBuf};
@@ -8,7 +8,7 @@ use std::{env::current_dir, path::Path, path::PathBuf};
 /// Query the remote urls for a git repo, which we assume to be in the current working directory.
 pub struct Git;
 
-impl traits::Vcs for Git {
+impl Vcs for Git {
     /// Test to see if the current directory houses a git repo.
     ///
     /// # Parameters

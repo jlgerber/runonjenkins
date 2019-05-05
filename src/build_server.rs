@@ -1,30 +1,14 @@
-
 //! build_server.rs
 //!
 //! Provides the BuildServer struct, which is used to connect to
 //! the build server and request a remote build from it.
-use crate::{
-    build_request::BuildRequest,
-    constants::*,
-};
+use crate::{build_request::BuildRequest, constants::*};
 use failure::bail;
-use reqwest::{
-    header::HeaderValue,
-    Request,
-    header::CONTENT_TYPE,
-};
-use std::{
-    default::Default,
-    str::{
-        FromStr,
-    },
-};
+use reqwest::{header::HeaderValue, header::CONTENT_TYPE, Request};
+use std::{default::Default, str::FromStr};
 use url::{
+    percent_encoding::{utf8_percent_encode, USERINFO_ENCODE_SET},
     Url,
-    percent_encoding::{
-            utf8_percent_encode,
-            USERINFO_ENCODE_SET
-        }
 };
 
 /// A struct used to conncet with the build server, it stores
@@ -37,9 +21,7 @@ pub struct BuildServer {
     domain: String,
 }
 
-
 impl BuildServer {
-
     /// New up a BuildServer. The BuildServer holds information that
     /// allows us to connect to the actual build server.
     ///
@@ -52,8 +34,9 @@ impl BuildServer {
     /// # Returns
     ///
     /// A new instance of BuildServer
-    pub fn new<I>(host:I, port: u32, domain: I)  -> Self
-    where I: Into<String>
+    pub fn new<I>(host: I, port: u32, domain: I) -> Self
+    where
+        I: Into<String>,
     {
         Self {
             host: host.into(),
@@ -71,9 +54,15 @@ impl BuildServer {
     /// method is generally used by the request_build method and is exposed publicly
     /// for visualization purposes.
     pub fn request_route(&self) -> Option<Url> {
-        match Url::from_str(format!("http://{}.{}:{}/{}", self.host, self.domain, self.port, BUILD_ROUTE).as_str()) {
+        match Url::from_str(
+            format!(
+                "http://{}.{}:{}/{}",
+                self.host, self.domain, self.port, BUILD_ROUTE
+            )
+            .as_str(),
+        ) {
             Ok(e) => Some(e),
-            Err(_) => None
+            Err(_) => None,
         }
     }
 
@@ -102,9 +91,8 @@ impl BuildServer {
         &self,
         req: &BuildRequest,
         verbose: bool,
-        dry_run: bool
+        dry_run: bool,
     ) -> Result<Option<reqwest::Response>, failure::Error> {
-
         let client = reqwest::Client::new();
 
         let route = self.request_route();
@@ -122,15 +110,19 @@ impl BuildServer {
         // because F*&ing Jenkins doesnt understand posted json data. it wants
         // x-www-form-urlencoded data. So we set the header manually, as well as
         // the body. fun
-        let request = client.post(route)
-        .header(
-            CONTENT_TYPE,
-            HeaderValue::from_static("application/x-www-form-urlencoded"),
-        )
-        .body(format!("json={}",json))
-        .build().unwrap();
+        let request = client
+            .post(route)
+            .header(
+                CONTENT_TYPE,
+                HeaderValue::from_static("application/x-www-form-urlencoded"),
+            )
+            .body(format!("json={}", json))
+            .build()
+            .unwrap();
 
-        if verbose || dry_run { Self::request_report(&request);}
+        if verbose || dry_run {
+            Self::request_report(&request);
+        }
 
         // execute the actual query
         if !dry_run {
@@ -150,8 +142,8 @@ impl BuildServer {
                     }
 
                     Ok(Some(res))
-                },
-                Err(e) => bail!("{}", e)
+                }
+                Err(e) => bail!("{}", e),
             }
         } else {
             println!("END DRY-RUN MODE");
@@ -162,11 +154,6 @@ impl BuildServer {
 
 impl Default for BuildServer {
     fn default() -> Self {
-        Self::new(
-            BUILD_SERVER,
-            BUILD_SERVER_PORT,
-            BUILD_DOMAIN
-        )
+        Self::new(BUILD_SERVER, BUILD_SERVER_PORT, BUILD_DOMAIN)
     }
 }
-

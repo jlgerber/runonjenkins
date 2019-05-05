@@ -1,5 +1,5 @@
+use crate::constants::OS_VAR;
 use shellfn::shell;
-use crate::{constants::OS_VAR};
 
 /// Retrieve the os from the shell
 pub struct MachineOs;
@@ -13,7 +13,8 @@ impl MachineOs {
 }
 
 #[shell]
-fn _get_os(os_var: &str) -> Result<String, failure::Error> { r#"
+fn _get_os(os_var: &str) -> Result<String, failure::Error> {
+    r#"
     printenv $OS_VAR
 "#
 }

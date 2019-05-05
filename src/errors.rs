@@ -10,7 +10,6 @@ impl fmt::Display for ShellFnError {
     }
 }
 
-
 #[derive(Debug, Clone, Fail)]
 pub struct RouteError(pub String);
 
@@ -36,26 +35,24 @@ pub enum RemoteBuildError {
     FailureError(String),
 }
 
-
 // make sure that we can convert from a reference to self
 impl From<std::io::Error> for RemoteBuildError {
     fn from(value: std::io::Error) -> Self {
-       RemoteBuildError::Io(value)
+        RemoteBuildError::Io(value)
     }
 }
-
 
 // make sure that we can convert from a reference to self
 impl From<failure::Error> for RemoteBuildError {
     fn from(value: failure::Error) -> Self {
-       RemoteBuildError::FailureError(value.to_string())
+        RemoteBuildError::FailureError(value.to_string())
     }
 }
 
 // make sure that we can convert from a reference to self
 impl From<url::ParseError> for RemoteBuildError {
     fn from(value: url::ParseError) -> Self {
-       RemoteBuildError::ParseError(value.to_string())
+        RemoteBuildError::ParseError(value.to_string())
     }
 }
 // // make sure that we can convert from a reference to self

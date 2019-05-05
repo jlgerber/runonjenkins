@@ -1,5 +1,5 @@
-use std::path::{PathBuf, Path};
 use failure;
+use std::path::{Path, PathBuf};
 
 pub trait Vcs {
     /// is the current working directory a repository?

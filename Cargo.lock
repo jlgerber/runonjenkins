@@ -849,7 +849,7 @@ dependencies = [
 
 [[package]]
 name = "pkg-build-remote"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "git2 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",

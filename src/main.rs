@@ -2,7 +2,7 @@ use pkg_build_remote::{
     get_flavors, traits::*, BuildRequest, BuildServer, Git, Minifest, Platform, RemoteBuildError,
     Svn, VcsSystem,
 };
-use std::env;
+use std::{env, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -12,11 +12,18 @@ struct Opt {
     // be used for the help message of the flag.
     /// The source code management system in use for the particular
     /// project. This is optional, as pkg-build-remote will attempt to
-    /// identify the system by scanning the current working directory in
+    /// identify the system by scanning the current working directory, or
+    /// the directory supplied via the --repo-path flag in
     /// order to identify the correct version control system.
     /// Current choices: git | svn
     #[structopt(short = "s", long = "scm")]
     vcs: Option<String>,
+
+    /// The path to the repository on disk, if it is not the current working
+    /// directory. This is where the command will look for your vcs and
+    /// manifest if warranted.
+    #[structopt(short = "p", long = "repo-path", parse(from_os_str))]
+    project_path: Option<PathBuf>,
 
     /// Optionally suppiy one or more flavours to build as a comma separated
     /// list. By default, pkg-build-remote will attempt to build the
@@ -45,18 +52,18 @@ struct Opt {
     dry_run: bool,
 }
 
-fn identify_vcs(selection: &Option<String>) -> VcsSystem {
+fn identify_vcs(selection: &Option<String>, path: &Path) -> VcsSystem {
     match selection {
         Some(val) => {
             println!("vcs predefined");
             return VcsSystem::from(val.as_str());
         }
         None => {
-            if Git::is_cwd_repo() {
+            if Git::is_repo(path) {
                 println!("git found");
                 return VcsSystem::from("git");
             }
-            if Svn::is_cwd_repo() {
+            if Svn::is_repo(path) {
                 println!("svn found");
                 return VcsSystem::from("svn");
             }
@@ -159,7 +166,7 @@ fn request_build_for(
 //                we expect to find the manifest.
 // # Returns
 //
-// A
+// A String if successful. Otherwise, a RemoteBuildError
 fn resolve_flavors(
     flavors: Option<String>,
     flavours: Option<String>,
@@ -182,11 +189,11 @@ fn resolve_flavors(
 
 fn main() -> Result<(), failure::Error> {
     let opts = Opt::from_args();
-    let cwd = env::current_dir()?;
-    let flavors = resolve_flavors(opts.flavors, opts.flavours, Some(&cwd))?;
-    let vcs = identify_vcs(&opts.vcs);
+    let project_path = opts.project_path.unwrap_or(env::current_dir()?);
+    let flavors = resolve_flavors(opts.flavors, opts.flavours, Some(&project_path))?;
+    let vcs = identify_vcs(&opts.vcs, &project_path);
     let build_server = BuildServer::default();
-    let minifest = Minifest::from_disk(None)?;
+    let minifest = Minifest::from_disk(Some(&project_path))?;
 
     if opts.verbose {
         println!("{:?}", minifest)
@@ -208,7 +215,7 @@ fn main() -> Result<(), failure::Error> {
             )?;
         }
         VcsSystem::Git => {
-            let remote_server = Git::get_server_urls(&cwd)?;
+            let remote_server = Git::get_server_urls(&project_path)?;
             let remote_server = &remote_server[0];
 
             let _ = request_build_for(

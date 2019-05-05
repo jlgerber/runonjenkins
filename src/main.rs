@@ -10,13 +10,20 @@ struct Opt {
     /// The source code management system in use for the particular
     /// project. This is optional, as pkg-build-remote will attempt to
     /// identify the system by inspecting disk. Current choices: git | svn
+
     #[structopt(short = "s", long = "scm")]
     vcs: Option<String>,
     /// Suppiy one or more flavours to build as a comma separated
     /// list. By default, pkg-build-remote will attempt to build the
-    /// vanilla flavour.
+    /// vanilla flavour. Ths option is case insensitive.
+
     #[structopt(short = "f", long = "flavours", default_value="^")]
     flavors: String,
+    /// Optionally supply a list of one or more, comma separated, platforms.
+    /// Valid choices include cent6 | cent6_64 | cent7 | cent7_64. This
+    /// is case insensitive
+    #[structopt(short = "p", long = "platforms", default_value="cent7")]
+    platforms: String,
 
     /// Provide verbose feedback to stdout
     #[structopt(short = "v", long = "verbose")]
@@ -55,6 +62,14 @@ fn parse_flavors(flavor: &str) -> Vec<&str> {
     flavor.split(",").map(|x| x.trim()).collect::<Vec<&str>>()
 }
 
+fn parse_platforms(platforms: &str) -> Vec<Platform> {
+    platforms
+    .split(",")
+    .map(|x| x.trim())
+    .map(|x| Platform::from(x))
+    .collect::<Vec<Platform>>()
+}
+
 fn build_requests(
     minifest: &Minifest,
     repo: &str,
@@ -79,8 +94,8 @@ fn build_requests(
     build_reqs
 }
 
-
-fn main() -> Result<(), failure::Error>{
+//fn trigger_requests(minifest: &Minifest, vcs: &VcsSystem, platforms: &str, )
+fn main() -> Result<(), failure::Error> {
     let opts = Opt::from_args();
 
     let vcs = identify_vcs(&opts.vcs);
@@ -97,41 +112,44 @@ fn main() -> Result<(), failure::Error>{
 
     // get minifest
     let minifest = Minifest::from_disk(None)?;
+
+    let platforms = parse_platforms(&opts.platforms);
+
     println!("{:?}", minifest);
     match vcs {
         VcsSystem::Svn => {
             let remotes = Svn::get_url(minifest.version.as_str())?;
 
             if opts.verbose{ println!("{:#?}", remotes); }
-
-            let build_reqs = build_requests(&minifest, remotes.as_str(), &VcsSystem::Svn, &Platform::Cent7,&flavors);
-            for br in build_reqs {
-                if opts.verbose{ println!("{:#?}", br); }
-                if opts.dry_run {
-                    println!("dry_run mode");
-                    println!("route {:?}", build_server.request_route());
-                    println!("build params: {:#?}", br.to_build_params());
-                } else {
-                let _results = build_server.request_build(&br, opts.verbose, opts.dry_run)?;
+            for platform in platforms {
+                let build_reqs = build_requests(&minifest, remotes.as_str(), &VcsSystem::Svn, &platform, &flavors);
+                for br in build_reqs {
+                    if opts.verbose{ println!("{:#?}", br); }
+                    if opts.dry_run {
+                        println!("dry_run mode");
+                        println!("route {:?}", build_server.request_route());
+                        println!("build params: {:#?}", br.to_build_params());
+                    } else {
+                    let _results = build_server.request_build(&br, opts.verbose, opts.dry_run)?;
+                    }
                 }
             }
         },
          VcsSystem::Git => {
             let cwd = env::current_dir()?;
             let remotes = Git::get_remotes_strings(cwd.to_str().unwrap())?;
-
             if opts.verbose{ println!("{:#?}", remotes); }
-
-            let build_reqs = build_requests(&minifest, remotes[0].as_str(), &VcsSystem::Git, &Platform::Cent7,&flavors);
-            for br in build_reqs {
-                if opts.verbose { println!("{:#?}", br); }
-
-                if opts.dry_run {
-                    println!("dry_run mode");
-                    println!("route {:?}", build_server.request_route());
-                    println!("build params: {:#?}", br.to_build_params());
-                } else {
-                let _results = build_server.request_build(&br, opts.verbose, opts.dry_run)?;
+            for platform in platforms {
+                let build_reqs = build_requests( &minifest, remotes[0].as_str(), &VcsSystem::Git, &platform, &flavors );
+                for br in build_reqs {
+                    if opts.verbose { println!("{:#?}", br) };
+                    if opts.dry_run {
+                        println!("dry_run mode");
+                        println!("route {:?}", build_server.request_route());
+                        println!("build params: {:#?}", br.to_build_params());
+                    } else {
+                    let _results = build_server.request_build(&br, opts.verbose, opts.dry_run)?;
+                    }
                 }
             }
         }

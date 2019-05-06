@@ -4,28 +4,6 @@ use shellfn::shell;
 use std::{iter::Iterator, path::Path};
 use failure::AsFail;
 
-#[derive(Debug, Deserialize, Serialize)]
-struct Flavour {
-    name: String,
-    version: String,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Flavours {
-    flavours: Vec<Flavour>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Manifests {
-    manifests: Vec<Flavours>,
-}
-
-#[shell]
-fn _get_flavors(flavor_path: &str) -> Result<impl Iterator<Item = String>, failure::Error> {
-    r#"
-    cd $FLAVOR_PATH && pk manifest --flavours --json=1
-"#
-}
 
 /// Retrieve a list of flavors given an optional path to the
 /// base git repo.
@@ -59,4 +37,28 @@ pub fn get_flavors(path: Option<&Path>) -> Result<Vec<String>, failure::Error> {
         .map(|flav| flav.name.to_string())
         .collect::<Vec<String>>();
     Ok(result)
+}
+
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Flavour {
+    name: String,
+    version: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Flavours {
+    flavours: Vec<Flavour>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Manifests {
+    manifests: Vec<Flavours>,
+}
+
+#[shell]
+fn _get_flavors(flavor_path: &str) -> Result<impl Iterator<Item = String>, failure::Error> {
+    r#"
+    cd $FLAVOR_PATH && pk manifest --flavours --json=1
+"#
 }

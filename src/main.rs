@@ -65,7 +65,7 @@ struct Opt {
 // return a VcsSystem instance based either on supplied name (selection), or identification
 // from the path. In the event that the user has supplied an invalid VcsSystem or path,
 // this function will report an error to stderr and exit the process.
-fn identify_vcs(selection: &Option<String>, path: &Path, verbose: bool) -> VcsSystem {
+fn identify_vcs(selection: &Option<String>, path: &Path) -> VcsSystem {
     match selection {
         Some(val) => {
             debug!("vcs predefined");
@@ -269,7 +269,7 @@ fn main() -> Result<(), failure::Error> {
 
     }
     let flavors = flavors.unwrap();
-    let vcs = identify_vcs(&opts.vcs, &project_path, opts.verbose);
+    let vcs = identify_vcs(&opts.vcs, &project_path);
     let build_server = BuildServer::default();
     let minifest = Minifest::from_disk(Some(&project_path))?;
 

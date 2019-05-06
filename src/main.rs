@@ -25,9 +25,9 @@ struct Opt {
     #[structopt(short = "p", long = "repo-path", parse(from_os_str))]
     project_path: Option<PathBuf>,
 
-    /// Optionally suppiy one or more flavours to build as a comma separated
-    /// list. By default, pkg-build-remote will attempt to build the
-    /// vanilla flavour.
+    /// Optionally suppiy one or more flavours as a comma separated
+    /// list. By default, pkg-build-remote will attempt to build all
+    /// of the flavors defined in the manifest.
     #[structopt(short = "f", long = "flavours")]
     flavours: Option<String>,
 
@@ -48,7 +48,7 @@ struct Opt {
     /// When set to true, pkg-build-remote will report on its choices,
     /// but will not actually execute a remote build. May be used to
     /// verify input to the command.
-    #[structopt(short = "d", long = "dry-run")]
+    #[structopt(short = "n", long = "dry-run")]
     dry_run: bool,
 }
 

@@ -11,6 +11,7 @@ use url::{
     Url,
 };
 
+use prettytable::{table, row, cell, format};
 /// A struct used to conncet with the build server, it stores
 /// attributes necessary to make a connection and provides methods
 /// to interact with the server, including the ability to request
@@ -66,18 +67,24 @@ impl BuildServer {
         }
     }
 
+    /*
     // Report on the request object's composition
     fn request_report(request: &Request) {
-        println!("Request Information");
-        println!("Request Headers");
-        println!("{:#?}", request.headers());
-        println!("Request URL");
-        println!("{:?}", request.url());
+
+        let mut table = table!(
+            [FYbH2c -> "Request Information"],
+            [FYb -> "URL", Fwb -> format!("{:?}",request.url())]
+
+        );
+        for header in request.headers() {
+            table.add_row(row![FYb -> format!("{}",header.0).as_str(), Fwb -> format!("{:?}",header.1).as_str()]);
+        }
+        table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
         println!("");
-        println!("Request Body");
-        println!("{:#?}", request.body());
+        table.printstd();
         println!("");
     }
+    */
 
     /// Request a build from the build server, providing information per the
     /// req
@@ -119,23 +126,37 @@ impl BuildServer {
             .body(format!("json={}", json))
             .build()
             .unwrap();
-
-        if verbose || dry_run {
+        /*
+        if verbose  {
             Self::request_report(&request);
         }
-
+        */
         // execute the actual query
         if !dry_run {
             let res = client.execute(request);
 
             match res {
                 Ok(mut res) => {
+                    let mut rheaders_table = table!([FYbH2c -> "Response"]);
                     if verbose {
-                        println!("Return Headers:\n{:#?}", res.headers());
+                        rheaders_table.add_row(row![FYbH2c -> "Return Headers"]);
+                        for header in res.headers() {
+                            rheaders_table.add_row(
+                                row![
+                                    Fyb -> format!("{}",header.0).as_str(),
+                                    Fwb -> format!("{:?}",header.1).as_str()
+                                ]
+                            );
+                        };
+
+                        rheaders_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+
                     }
 
-                    println!("Return Status: {}\n", res.status());
-
+                    rheaders_table.add_row(row![Fyb -> "Return Status", Fwb ->  res.status()]);
+                    println!("");
+                    rheaders_table.printstd();
+                    println!("");
                     if verbose {
                         // copy the response body directly to stdout
                         std::io::copy(&mut res, &mut std::io::stdout())?;
@@ -146,7 +167,6 @@ impl BuildServer {
                 Err(e) => bail!("{}", e),
             }
         } else {
-            println!("END DRY-RUN MODE");
             Ok(None)
         }
     }

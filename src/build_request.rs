@@ -100,19 +100,19 @@ impl BuildParameters {
 /// object in order to serialize to json for the actual build request POST.
 pub struct BuildRequest {
     /// name of the package
-    project: String,
+    pub project: String,
     /// version of the package, corresponding to an extant tag in the scm
     /// system that the package is stored in. For the build to be successful,
     /// the package must have been tagged under the `version`.
-    version: String,
+    pub version: String,
     /// package flavor. "^" is vanilla
-    flavor: String,
+    pub flavor: String,
     /// Url to the package's repository in version control
-    repo: Url,
+    pub repo: Url,
     /// The version control system that the package is stored in
-    scm_type: VcsSystem,
+    pub scm_type: VcsSystem,
     /// The os that the package is to be built for
-    platform: Platform,
+    pub platform: Platform,
 }
 
 impl BuildRequest {

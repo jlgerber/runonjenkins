@@ -2,8 +2,10 @@ use pkg_build_remote::{
     get_flavors, traits::*, BuildRequest, BuildServer, Git, Minifest, Platform, RemoteBuildError,
     Svn, VcsSystem,
 };
-use prettytable;
-use std::{env, path::{Path, PathBuf}};
+use prettytable::{table, row, cell, format};
+use pretty_env_logger;
+use log::{debug, info, error};
+use std::{env, io::{stdout, stdin, Write}, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -23,7 +25,7 @@ struct Opt {
     /// The path to the repository on disk, if it is not the current working
     /// directory. This is where the command will look for your vcs and
     /// manifest if warranted.
-    #[structopt(short = "p", long = "repo-path", parse(from_os_str))]
+    #[structopt(short = "r", long = "repo-path", parse(from_os_str))]
     project_path: Option<PathBuf>,
 
     /// Optionally suppiy one or more flavours as a comma separated
@@ -51,6 +53,10 @@ struct Opt {
     /// verify input to the command.
     #[structopt(short = "n", long = "dry-run")]
     dry_run: bool,
+    /// Present a prompt allowing the user to decide whether to submit the job
+    /// after reviewing relevant information.
+    #[structopt(short = "a", long = "prompt")]
+    prompt: bool,
 }
 
 // Given a reference to an Option<String> where the String is the vcs choice,
@@ -61,26 +67,26 @@ struct Opt {
 fn identify_vcs(selection: &Option<String>, path: &Path, verbose: bool) -> VcsSystem {
     match selection {
         Some(val) => {
-            if verbose { println!("vcs predefined"); }
+            debug!("vcs predefined");
             let vcs_val = VcsSystem::from(val.as_str());
             if let VcsSystem::Unknown(v) = vcs_val {
-                eprintln!("Unknown vcs system: {}", v);
+                error!("Unknown vcs system: {}", v);
                 std::process::exit(1);
             }
             return vcs_val;
         }
         None => {
             if Git::is_repo(path) {
-                if verbose { println!("git found"); }
+                debug!("git found");
                 return VcsSystem::from("git");
             }
             if Svn::is_repo(path) {
-                if verbose { println!("svn found"); }
+                debug!("svn found");
                 return VcsSystem::from("svn");
             }
         }
     }
-    eprintln!("Error: No VCS system idemtified");
+    error!("Error: No VCS system idemtified");
     std::process::exit(1);
 }
 
@@ -150,7 +156,8 @@ fn build_requests(
 // * `flavors`         - A comma separated list of flavors to build. (eg ^,maya)
 // * `dry_run`         - Whether or not we are in dry run mode
 // * `verbose`         - Whether or not we are in verbose mode
-//
+// * `prompt`          - prompt the user as to whether the user wishes to execute a remote build after
+//                       being presented with relevant details.
 // # Returns
 // Result wrapping () if successful, or Failure if unsuccessful
 fn request_build_for(
@@ -162,27 +169,52 @@ fn request_build_for(
     flavors: &str,
     dry_run: bool,
     verbose: bool,
+    prompt: bool,
 ) -> Result<(), failure::Error> {
     let platforms = parse_platforms(platforms);
     let flavors = parse_flavors(flavors);
 
-    if verbose {
-        println!("{:#?}", vcs_project_url);
+    debug!("{:?}", vcs_project_url);
+
+    if dry_run || verbose || prompt {
+        let platform_str: Vec<String> = platforms.iter().map(|x| x.to_string()).collect();
+        let platform_str = platform_str.join(" , ");
+
+        let mut table = table!(
+            [FYbH2c -> "Remote Build Request Information"],
+            [FYb -> "Route",     Fwb -> build_server.request_route().unwrap()],
+            [FYb -> "Project",   Fwb ->  minifest.name],
+            [FYb -> "VCS Tag",   Fwb -> minifest.version],
+            [FYb -> "Flavors",   Fwb -> flavors.join(" , ").as_str()],
+            [FYb -> "VCS Repo",  Fwb -> vcs_project_url.as_str()],
+            [FYb -> "Platforms", Fwb -> platform_str.as_str()]
+        );
+        // FORMAT_CLEAN
+        // FORMAT_NO_COLSEP
+        // FORMAT_BORDERS_ONLY
+        table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
+        println!("");
+        table.printstd();
+        println!("");
+    }
+    if prompt {
+        print!("Do you wish to submit a build request? (y/n) ");
+        stdout().flush().ok().expect("unable to flush stdout");
+        let reader = stdin();
+        let mut result = String::new();
+        let _ = reader.read_line(&mut result).ok().expect("Failed to read line");
+        result = result.to_lowercase();
+        if result != "y" && result != "yes" {
+            println!("User cancelled build request: {}", result);
+            std::process::exit(0);
+        }
     }
     for platform in platforms {
         let build_reqs =
             build_requests(&minifest, vcs_project_url.as_str(), vcs, &platform, &flavors);
         for br in build_reqs {
-            if verbose {
-                println!("{:#?}", br);
-            }
-            if dry_run {
-                println!("dry_run mode");
-                println!("route {:?}", build_server.request_route());
-                println!("build params: {:#?}", br.to_build_params());
-            } else {
-                let _results = build_server.request_build(&br, verbose, dry_run)?;
-            }
+            debug!("{:?}", br);
+            let _results = build_server.request_build(&br, verbose, dry_run)?;
         }
     }
     Ok(())
@@ -209,7 +241,7 @@ fn resolve_flavors(
     path: Option<&std::path::Path>,
 ) -> Result<String, RemoteBuildError> {
     if flavours.is_some() && flavors.is_some() {
-        eprintln!("Using --falvours and --flavors? You cheeky monkey. Pick one or the other");
+        error!("Using --falvours and --flavors? You cheeky monkey. Pick one or the other");
         std::process::exit(1);
     }
 
@@ -224,6 +256,8 @@ fn resolve_flavors(
 }
 
 fn main() -> Result<(), failure::Error> {
+    pretty_env_logger::init();
+
     let opts = Opt::from_args();
     let project_path = opts.project_path.unwrap_or(env::current_dir()?);
     let flavors = resolve_flavors(opts.flavors, opts.flavours, Some(&project_path))?;
@@ -231,15 +265,13 @@ fn main() -> Result<(), failure::Error> {
     let build_server = BuildServer::default();
     let minifest = Minifest::from_disk(Some(&project_path))?;
 
-    if opts.verbose {
-        println!("{:?}", minifest)
-    };
+    debug!("{:?}", minifest);
 
-    match vcs {
+    let result = match vcs {
         VcsSystem::Svn => {
             let vcs_project_url = Svn::get_url(minifest.version.as_str())?;
 
-            let _ = request_build_for(
+            request_build_for(
                 &build_server,
                 &minifest,
                 &vcs_project_url,
@@ -248,13 +280,14 @@ fn main() -> Result<(), failure::Error> {
                 &flavors,
                 opts.dry_run,
                 opts.verbose,
-            )?;
+                opts.prompt,
+            )
         }
         VcsSystem::Git => {
             let vcs_project_url = Git::get_server_urls(&project_path)?;
             let vcs_project_url = &vcs_project_url[0];
 
-            let _ = request_build_for(
+            request_build_for(
                 &build_server,
                 &minifest,
                 &vcs_project_url,
@@ -263,13 +296,20 @@ fn main() -> Result<(), failure::Error> {
                 &flavors,
                 opts.dry_run,
                 opts.verbose,
-            )?;
+                opts.prompt,
+            )
         }
         _ => {
-            eprintln!("SCM must either be svn or git");
+            error!("SCM must either be svn or git");
             std::process::exit(1);
         }
-    }
-
+    };
+    match result {
+        Err(e) => {
+            error!("{}",e.cause());
+            std::process::exit(1);
+        }
+        _ => ()
+    };
     Ok(())
 }

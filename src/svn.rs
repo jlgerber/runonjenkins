@@ -74,9 +74,7 @@ impl Svn {
     ///
     /// A Url representing the svn server's url
     pub fn get_url(path: &Path, version: &str) -> Result<url::Url, RemoteBuildError> {
-        debug!(
-            "get_url calling get_server_urls with {:?}", path
-        )
+        debug!("get_url calling get_server_urls with {:?}", path);
         let url = Svn::get_server_urls(path)?;
         let url = &url[0];
         let url = url::Url::parse(format!("{}/{}", url.as_str(), version).as_str())?;

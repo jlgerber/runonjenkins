@@ -52,8 +52,8 @@ impl Vcs for Svn {
     ///
     /// A single element vector housing the Url to the svn server.
     fn get_server_urls(path: &Path) -> Result<Vec<url::Url>, failure::Error> {
-        // should probably unwrap this into an error
         debug!("get_server_urls({:?})", path);
+        // should probably unwrap this into an error
         let url_vec = _get_svn_url(path.to_str().unwrap_or("."))?;
         if url_vec.len() == 0 {
             Err(ShellFnError("unable to get svn url".to_string()).into())
@@ -74,6 +74,9 @@ impl Svn {
     ///
     /// A Url representing the svn server's url
     pub fn get_url(path: &Path, version: &str) -> Result<url::Url, RemoteBuildError> {
+        debug!(
+            "get_url calling get_server_urls with {:?}", path
+        )
         let url = Svn::get_server_urls(path)?;
         let url = &url[0];
         let url = url::Url::parse(format!("{}/{}", url.as_str(), version).as_str())?;

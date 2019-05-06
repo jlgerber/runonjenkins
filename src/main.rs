@@ -271,8 +271,13 @@ fn main() -> Result<(), failure::Error> {
     let flavors = flavors.unwrap();
     let vcs = identify_vcs(&opts.vcs, &project_path);
     let build_server = BuildServer::default();
-    let minifest = Minifest::from_disk(Some(&project_path))?;
-
+    let minifest = Minifest::from_disk(Some(&project_path));
+    if minifest.is_err() {
+        let e = minifest.unwrap_err();
+        error!("Problem with manifest. {}", e.as_fail());
+        std::process::exit(1);
+    }
+    let minifest = minifest.unwrap();
     debug!("{:?}", minifest);
 
     let result = match vcs {

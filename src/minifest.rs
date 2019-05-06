@@ -33,12 +33,12 @@ impl Minifest {
         attrs.push(
             mmiter
                 .next()
-                .ok_or_else(|| ShellFnError("unable to get name from manifest".to_string()))?,
+                .ok_or_else(|| ShellFnError("Unable to get name from manifest. Perhaps the manifest was not found?".to_string()))?,
         );
         attrs.push(
             mmiter
                 .next()
-                .ok_or_else(|| ShellFnError("Unable to get version from manifest".to_string()))?,
+                .ok_or_else(|| ShellFnError("Unable to get version from manifest.".to_string()))?,
         );
         let mut name = String::new();
         let mut version = String::new();
@@ -73,7 +73,7 @@ fn _get_minifest_from_grep(
     minifest_root_dir: &str,
 ) -> Result<impl Iterator<Item = String>, failure::Error> {
     r#"
-    cd $MINIFEST_ROOT_DIR && gfind . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
+    cd $MINIFEST_ROOT_DIR && gfind . -maxdepth 2 -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
 "#
 }
 
@@ -83,7 +83,7 @@ fn _get_minifest_from_grep(
     minifest_root_dir: &str,
 ) -> Result<impl Iterator<Item = String>, failure::Error> {
     r#"
-    cd $MINIFEST_ROOT_DIR && find . -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
+    cd $MINIFEST_ROOT_DIR && find . -maxdepth 2 -regextype posix-egrep -regex '.*(manifest|pk)\.yaml' | xargs -I@ grep -iE '^version:|^name:' @ | sed s/\'//g | sed 's/ //g'
 "#
 }
 

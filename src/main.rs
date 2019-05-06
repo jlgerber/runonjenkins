@@ -2,6 +2,7 @@ use pkg_build_remote::{
     get_flavors, traits::*, BuildRequest, BuildServer, Git, Minifest, Platform, RemoteBuildError,
     Svn, VcsSystem,
 };
+use prettytable;
 use std::{env, path::{Path, PathBuf}};
 use structopt::StructOpt;
 
@@ -52,31 +53,45 @@ struct Opt {
     dry_run: bool,
 }
 
-fn identify_vcs(selection: &Option<String>, path: &Path) -> VcsSystem {
+// Given a reference to an Option<String> where the String is the vcs choice,
+// and a path to the location where we are to look in the event that the selection is None,
+// return a VcsSystem instance based either on supplied name (selection), or identification
+// from the path. In the event that the user has supplied an invalid VcsSystem or path,
+// this function will report an error to stderr and exit the process.
+fn identify_vcs(selection: &Option<String>, path: &Path, verbose: bool) -> VcsSystem {
     match selection {
         Some(val) => {
-            println!("vcs predefined");
-            return VcsSystem::from(val.as_str());
+            if verbose { println!("vcs predefined"); }
+            let vcs_val = VcsSystem::from(val.as_str());
+            if let VcsSystem::Unknown(v) = vcs_val {
+                eprintln!("Unknown vcs system: {}", v);
+                std::process::exit(1);
+            }
+            return vcs_val;
         }
         None => {
             if Git::is_repo(path) {
-                println!("git found");
+                if verbose { println!("git found"); }
                 return VcsSystem::from("git");
             }
             if Svn::is_repo(path) {
-                println!("svn found");
+                if verbose { println!("svn found"); }
                 return VcsSystem::from("svn");
             }
         }
     }
-    println!("Error: No VCS system idemtified");
+    eprintln!("Error: No VCS system idemtified");
     std::process::exit(1);
 }
 
+// Convert a &str of comma separated flavor names into a
+// vector of flavor name `&str`s
 fn parse_flavors(flavor: &str) -> Vec<&str> {
     flavor.split(",").map(|x| x.trim()).collect::<Vec<&str>>()
 }
 
+// Given a &str of potentially comma separated platform names,
+// convert them to Platform instances, filtering out Platform::Unknowns
 fn parse_platforms(platforms: &str) -> Vec<Platform> {
     platforms
         .split(",")
@@ -93,6 +108,10 @@ fn parse_platforms(platforms: &str) -> Vec<Platform> {
         .collect::<Vec<Platform>>()
 }
 
+// Construct a Vector of BuildRequest instances, one per flavor.
+// The BuildRequest provides a method that produces a struct
+// which is serializable into json in the form that Jenkins
+// is looking for
 fn build_requests(
     minifest: &Minifest,
     repo: &str,
@@ -117,10 +136,27 @@ fn build_requests(
     build_reqs
 }
 
+// Trigger a build on the given build server, with the project identified
+// using the supplied parameters. Of course, if dry_run is true, then simply
+// pretend to do a build.
+//
+// # Parameters
+//
+// * `build_server` - The build server instance.
+// * `minifest`     - The minifest instance, which supplies the name and version from the manifest
+// * `vcs_project_url` - The url of the project on the vcs server (eg svn or gitlab)
+// * `vcs`             - The version control system (eg git, svn)
+// * `platforms`       - A comma separated list of platforms to build for (eg cent6,cent7)
+// * `flavors`         - A comma separated list of flavors to build. (eg ^,maya)
+// * `dry_run`         - Whether or not we are in dry run mode
+// * `verbose`         - Whether or not we are in verbose mode
+//
+// # Returns
+// Result wrapping () if successful, or Failure if unsuccessful
 fn request_build_for(
     build_server: &BuildServer,
     minifest: &Minifest,
-    remote_server: &url::Url,
+    vcs_project_url: &url::Url,
     vcs: &VcsSystem,
     platforms: &str,
     flavors: &str,
@@ -131,11 +167,11 @@ fn request_build_for(
     let flavors = parse_flavors(flavors);
 
     if verbose {
-        println!("{:#?}", remote_server);
+        println!("{:#?}", vcs_project_url);
     }
     for platform in platforms {
         let build_reqs =
-            build_requests(&minifest, remote_server.as_str(), vcs, &platform, &flavors);
+            build_requests(&minifest, vcs_project_url.as_str(), vcs, &platform, &flavors);
         for br in build_reqs {
             if verbose {
                 println!("{:#?}", br);
@@ -191,7 +227,7 @@ fn main() -> Result<(), failure::Error> {
     let opts = Opt::from_args();
     let project_path = opts.project_path.unwrap_or(env::current_dir()?);
     let flavors = resolve_flavors(opts.flavors, opts.flavours, Some(&project_path))?;
-    let vcs = identify_vcs(&opts.vcs, &project_path);
+    let vcs = identify_vcs(&opts.vcs, &project_path, opts.verbose);
     let build_server = BuildServer::default();
     let minifest = Minifest::from_disk(Some(&project_path))?;
 
@@ -201,12 +237,12 @@ fn main() -> Result<(), failure::Error> {
 
     match vcs {
         VcsSystem::Svn => {
-            let remote_server = Svn::get_url(minifest.version.as_str())?;
+            let vcs_project_url = Svn::get_url(minifest.version.as_str())?;
 
             let _ = request_build_for(
                 &build_server,
                 &minifest,
-                &remote_server,
+                &vcs_project_url,
                 &vcs,
                 &opts.platforms,
                 &flavors,
@@ -215,13 +251,13 @@ fn main() -> Result<(), failure::Error> {
             )?;
         }
         VcsSystem::Git => {
-            let remote_server = Git::get_server_urls(&project_path)?;
-            let remote_server = &remote_server[0];
+            let vcs_project_url = Git::get_server_urls(&project_path)?;
+            let vcs_project_url = &vcs_project_url[0];
 
             let _ = request_build_for(
                 &build_server,
                 &minifest,
-                &remote_server,
+                &vcs_project_url,
                 &vcs,
                 &opts.platforms,
                 &flavors,

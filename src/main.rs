@@ -7,6 +7,7 @@ use pretty_env_logger;
 use log::{debug, info, error};
 use std::{env, io::{stdout, stdin, Write}, path::{Path, PathBuf}};
 use structopt::StructOpt;
+use failure::AsFail;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "pkg-build-remote")]
@@ -260,7 +261,14 @@ fn main() -> Result<(), failure::Error> {
 
     let opts = Opt::from_args();
     let project_path = opts.project_path.unwrap_or(env::current_dir()?);
-    let flavors = resolve_flavors(opts.flavors, opts.flavours, Some(&project_path))?;
+    let flavors =  resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
+    if flavors.is_err() {
+       let e = flavors.unwrap_err();
+        error!("Unable to resolve flavors: {}.",e.as_fail());
+        std::process::exit(1);
+
+    }
+    let flavors = flavors.unwrap();
     let vcs = identify_vcs(&opts.vcs, &project_path, opts.verbose);
     let build_server = BuildServer::default();
     let minifest = Minifest::from_disk(Some(&project_path))?;
@@ -306,7 +314,7 @@ fn main() -> Result<(), failure::Error> {
     };
     match result {
         Err(e) => {
-            error!("{}",e.cause());
+            error!("{}",e.as_fail());
             std::process::exit(1);
         }
         _ => ()

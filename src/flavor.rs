@@ -2,6 +2,7 @@ use crate::RemoteBuildError;
 use serde::{Deserialize, Serialize};
 use shellfn::shell;
 use std::{iter::Iterator, path::Path};
+use failure::AsFail;
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Flavour {
@@ -35,9 +36,23 @@ pub fn get_flavors(path: Option<&Path>) -> Result<Vec<String>, failure::Error> {
         RemoteBuildError::ConversionError("unable to convert path to str".to_string())
     })?;
 
-    let mut flavors = _get_flavors(path)?;
+    let mut flavors = match _get_flavors(path) {
+        Ok(val) => Ok(val),
+        Err(e) =>
+            Err(RemoteBuildError::FlavorError(
+                format!("Failure shelling out to pk manifest: {}", e.as_fail()))
+            )
+    }?;
+
     let flavors = flavors.next().unwrap();
-    let flavors: Manifests = serde_json::from_str(flavors.as_str())?;
+    let flavors: Manifests = match serde_json::from_str(flavors.as_str()){
+        Ok(val) => Ok(val),
+        Err(e) =>
+            Err(RemoteBuildError::FlavorError(
+                format!("Unable to retrieve flavors from manifest via pk manifest: {}", e.as_fail()))
+            )
+    }?;
+
     let result = flavors.manifests[0]
         .flavours
         .iter()

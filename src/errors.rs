@@ -31,6 +31,8 @@ pub enum RemoteBuildError {
     NoneError,
     #[fail(display = "ParseError: {}", _0)]
     ParseError(String),
+    #[fail(display = "FlavorError: {}", _0)]
+    FlavorError(String),
     #[fail(display = "FailureError: {}", _0)]
     FailureError(String),
 }

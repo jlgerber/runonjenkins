@@ -2,6 +2,7 @@ use crate::RemoteBuildError;
 use crate::{prelude::*, ShellFnError};
 use shellfn::shell;
 use std::{env::current_dir, path::Path, path::PathBuf};
+use log::debug;
 
 /// Query for the url of the svn server. This struct requires that
 /// the `svn` command be available on the shell to work. There are no

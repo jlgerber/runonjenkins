@@ -35,6 +35,16 @@ struct Opt {
     #[structopt(short = "f", long = "flavours")]
     flavours: Option<String>,
 
+    /// Optionally specify the name of the package instead of pulling it from
+    /// the manifest.
+    #[structopt(long = "name")]
+    name: Option<String>,
+
+    /// Optionally specify the tag to build from instead of pulling it from the
+    /// manifest (in the form of the version)
+    #[structopt(short = "t", long = "tag")]
+    tag: Option<String>,
+
     /// Not fond of the British spelling? Register your disatisfaction at
     /// taxation without representation by using the American spelling.
     #[structopt(long = "flavors")]
@@ -256,6 +266,18 @@ fn resolve_flavors(
     Ok(flavors)
 }
 
+// get the minifest from the path, unless both the name and tag are passed in as Some. Then
+// in that case, build the minifest out of them
+fn get_minifest(project_path: &Path, name: &Option<String>, tag: &Option<String>) -> Result<Minifest, failure::Error> {
+    if name.is_some() && tag.is_some() {
+        let name = name.as_ref().unwrap();
+        let tag = tag.as_ref().unwrap();
+        Ok(Minifest::new(name.clone(), tag.clone()))
+    } else {
+        Minifest::from_disk(Some(&project_path))
+    }
+}
+
 fn main() -> Result<(), failure::Error> {
     pretty_env_logger::init();
 
@@ -271,7 +293,8 @@ fn main() -> Result<(), failure::Error> {
     let flavors = flavors.unwrap();
     let vcs = identify_vcs(&opts.vcs, &project_path);
     let build_server = BuildServer::default();
-    let minifest = Minifest::from_disk(Some(&project_path));
+
+    let minifest = get_minifest(&project_path, &opts.name, &opts.tag);//Minifest::from_disk(Some(&project_path));
     if minifest.is_err() {
         let e = minifest.unwrap_err();
         error!("Problem with manifest. {}", e.as_fail());

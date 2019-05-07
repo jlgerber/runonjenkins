@@ -37,7 +37,7 @@ struct Opt {
 
     /// Optionally specify the name of the package instead of pulling it from
     /// the manifest.
-    #[structopt(long = "name")]
+    #[structopt(short="n", long = "name")]
     name: Option<String>,
 
     /// Optionally specify the tag to build from instead of pulling it from the
@@ -62,7 +62,7 @@ struct Opt {
     /// When set to true, pkg-build-remote will report on its choices,
     /// but will not actually execute a remote build. May be used to
     /// verify input to the command.
-    #[structopt(short = "n", long = "dry-run")]
+    #[structopt(short = "d", long = "dry-run")]
     dry_run: bool,
     /// Present a prompt allowing the user to decide whether to submit the job
     /// after reviewing relevant information.

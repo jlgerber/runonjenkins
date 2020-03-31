@@ -3,54 +3,14 @@
 //!
 //! A BuildRequest models the data needed to trigger a build on jenkins. It includes the
 //! project, the version, the flavor, teh repo, teh scm type
-use crate::constants::PARAM_CNT;
-use crate::Platform;
-use crate::VcsSystem;
-use serde::{Deserialize, Serialize};
+use crate::BuildParamType;
+use crate::{Minifest, VcsSystem, Platform, RemoteBuildError};
+use serde::{Serialize, Deserialize};
+use serde;
+use url::{ParseError,Url};
+use crate::constants::*;
 use std::str::FromStr;
-use std::string::ToString;
-use url::{ParseError, Url};
 
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
-#[serde(untagged)]
-/// An enumeration of possible build parameter types. These include string, platform, url, and vcs system.
-pub enum BuildParamType {
-    String(String),
-    Platform(Platform),
-    Url(String),
-    Vcs(VcsSystem),
-}
-
-// From conversions for BuildParamType
-impl<'a> From<&'a str> for BuildParamType {
-    fn from(value: &'a str) -> BuildParamType {
-        BuildParamType::String(value.to_string())
-    }
-}
-
-impl From<String> for BuildParamType {
-    fn from(value: String) -> BuildParamType {
-        BuildParamType::String(value)
-    }
-}
-
-impl From<Url> for BuildParamType {
-    fn from(value: Url) -> BuildParamType {
-        BuildParamType::Url(value.to_string())
-    }
-}
-
-impl From<Platform> for BuildParamType {
-    fn from(value: Platform) -> BuildParamType {
-        BuildParamType::Platform(value)
-    }
-}
-
-impl From<VcsSystem> for BuildParamType {
-    fn from(value: VcsSystem) -> BuildParamType {
-        BuildParamType::Vcs(value)
-    }
-}
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -172,6 +132,33 @@ impl BuildRequest {
         
         params
     }
+
+    // Construct a Vector of BuildRequest instances, one per flavor.
+    // The BuildRequest provides a method that produces a struct
+    // which is serializable into json in the form that Jenkins
+    // is looking for
+    pub fn build_requests(
+        minifest: &Minifest,
+        repo: &str,
+        scm_type: &VcsSystem,
+        platform: &Platform,
+        flavors: &Vec<&str>,
+    ) -> Result<Vec<BuildRequest>, RemoteBuildError> {
+        let mut build_reqs = Vec::with_capacity(flavors.len());
+        for flav in flavors {
+            let build_request = BuildRequest::new(
+                minifest.name.as_str(),
+                minifest.version.as_str(),
+                flav,
+                repo,
+                scm_type,
+                platform,
+            )?;
+            build_reqs.push(build_request);
+        }
+        Ok(build_reqs)
+    }
+
 }
 
 #[cfg(test)]

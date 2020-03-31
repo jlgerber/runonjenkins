@@ -1,15 +1,15 @@
 use failure::AsFail;
-use log::{debug, error, info};
+use log::{debug, error};
 use pkg_build_remote::{
-    get_flavors, traits::*, BuildRequest, BuildServer, Git, Minifest, Platform, RemoteBuildError,
-    Svn, VcsSystem,
+    traits::*, BuildRequest, BuildServer, Git, Minifest, RemoteBuildError,
+    Svn, VcsSystem, utils,
 };
 use pretty_env_logger;
 use prettytable::{cell, format, row, table};
 use std::{
     env,
     io::{stdin, stdout, Write},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 use structopt::StructOpt;
 
@@ -74,105 +74,9 @@ struct Opt {
     prompt: bool,
 }
 
-// Given a reference to an Option<String> where the String is the vcs choice,
-// and a path to the location where we are to look in the event that the selection is None,
-// return a VcsSystem instance based either on supplied name (selection), or identification
-// from the path. In the event that the user has supplied an invalid VcsSystem or path,
-// this function will report an error to stderr and exit the process.
-fn identify_vcs(selection: &Option<String>, path: &Path) -> VcsSystem {
-    match selection {
-        Some(val) => {
-            debug!("vcs predefined");
-            let vcs_val = VcsSystem::from(val.as_str());
-            if let VcsSystem::Unknown(v) = vcs_val {
-                error!("Unknown vcs system: {}", v);
-                std::process::exit(1);
-            }
-            return vcs_val;
-        }
-        None => {
-            if Git::is_repo(path) {
-                debug!("git found");
-                return VcsSystem::from("git");
-            }
-            if Svn::is_repo(path) {
-                debug!("svn found");
-                return VcsSystem::from("svn");
-            }
-        }
-    }
-    error!("Error: No VCS system idemtified");
-    std::process::exit(1);
-}
-
-// Convert a &str of comma separated flavor names into a
-// vector of flavor name `&str`s
-fn parse_flavors(flavor: &str) -> Vec<&str> {
-    flavor.split(",").map(|x| x.trim()).collect::<Vec<&str>>()
-}
-
-// Given a &str of potentially comma separated platform names,
-// convert them to Platform instances, filtering out Platform::Unknowns
-fn parse_platforms(platforms: &str) -> Vec<Platform> {
-    platforms
-        .split(",")
-        .map(|x| x.trim())
-        .map(|x| Platform::from(x))
-        // filter out any platforms that are unknown
-        .filter(|x| {
-            if let Platform::Unknown(_) = x {
-                false
-            } else {
-                true
-            }
-        })
-        .collect::<Vec<Platform>>()
-}
-
-// Construct a Vector of BuildRequest instances, one per flavor.
-// The BuildRequest provides a method that produces a struct
-// which is serializable into json in the form that Jenkins
-// is looking for
-fn build_requests(
-    minifest: &Minifest,
-    repo: &str,
-    scm_type: &VcsSystem,
-    platform: &Platform,
-    flavors: &Vec<&str>,
-) -> Result<Vec<BuildRequest>, RemoteBuildError> {
-    let mut build_reqs = Vec::with_capacity(flavors.len());
-    for flav in flavors {
-        let build_request = BuildRequest::new(
-            minifest.name.as_str(),
-            minifest.version.as_str(),
-            flav,
-            repo,
-            scm_type,
-            platform,
-        )?;
-        build_reqs.push(build_request);
-    }
-    Ok(build_reqs)
-}
-
 // Trigger a build on the given build server, with the project identified
 // using the supplied parameters. Of course, if dry_run is true, then simply
 // pretend to do a build.
-//
-// # Parameters
-//
-// * `build_server` - The build server instance.
-// * `minifest`     - The minifest instance, which supplies the name and version from the manifest
-// * `vcs_project_url` - The url of the project on the vcs server (eg svn or gitlab)
-// * `vcs`             - The version control system (eg git, svn)
-// * `platforms`       - A comma separated list of platforms to build for (eg cent6,cent7)
-// * `flavors`         - A comma separated list of flavors to build. (eg ^,maya)
-// * `dry_run`         - Whether or not we are in dry run mode
-// * `verbose`         - Whether or not we are in verbose mode
-// * `prompt`          - prompt the user as to whether the user wishes to execute a remote build after
-//                       being presented with relevant details.
-// # Returns
-// Result wrapping () if successful, or Failure if unsuccessful
 fn request_build_for(
     build_server: &BuildServer,
     minifest: &Minifest,
@@ -184,8 +88,8 @@ fn request_build_for(
     verbose: bool,
     prompt: bool,
 ) -> Result<(), failure::Error> {
-    let platforms = parse_platforms(platforms);
-    let flavors = parse_flavors(flavors);
+    let platforms = utils::parse_platforms(platforms);
+    let flavors = utils::parse_flavors(flavors);
 
     debug!("{:?}", vcs_project_url);
 
@@ -226,7 +130,7 @@ fn request_build_for(
         }
     }
     for platform in platforms {
-        let build_reqs = build_requests(
+        let build_reqs = BuildRequest::build_requests(
             &minifest,
             vcs_project_url.as_str(),
             vcs,
@@ -241,73 +145,23 @@ fn request_build_for(
     Ok(())
 }
 
-// Given flavors and flavours options from the command line, reconcile the two and identify
-// the requested flavors. This function will guard against specifying both flavors and flavours,
-// exiting the process if neither is None.
-// Furthermore, if both flavors and `flavours` are None, `resolve_flavors` will retrieve the
-// full list of flavors from the manifest.
-//
-// # Parameters
-//
-// * `flavors`  - an Option<String> populated via the --flavors flag of the cli.
-// * `flavours` - an Option<String> populated via the --flavours flag of the cli.
-// * `path`     - an Option<&Path> representing the path to the root of the vcs, where
-//                we expect to find the manifest.
-// # Returns
-//
-// A String if successful. Otherwise, a RemoteBuildError
-fn resolve_flavors(
-    flavors: Option<String>,
-    flavours: Option<String>,
-    path: Option<&std::path::Path>,
-) -> Result<String, RemoteBuildError> {
-    if flavours.is_some() && flavors.is_some() {
-        error!("Using --falvours and --flavors? You cheeky monkey. Pick one or the other");
-        std::process::exit(1);
-    }
-
-    let flavors = if flavours.is_none() && flavours.is_none() {
-        get_flavors(path)?.join(".")
-    } else if flavours.is_some() {
-        flavours.unwrap()
-    } else {
-        flavors.unwrap()
-    };
-    Ok(flavors)
-}
-
-// get the minifest from the path, unless both the name and tag are passed in as Some. Then
-// in that case, build the minifest out of them
-fn get_minifest(
-    project_path: &Path,
-    name: &Option<String>,
-    tag: &Option<String>,
-) -> Result<Minifest, failure::Error> {
-    if name.is_some() && tag.is_some() {
-        let name = name.as_ref().unwrap();
-        let tag = tag.as_ref().unwrap();
-        Ok(Minifest::new(name.clone(), tag.clone()))
-    } else {
-        Minifest::from_disk(Some(&project_path))
-    }
-}
 
 fn main() -> Result<(), failure::Error> {
     pretty_env_logger::init();
 
     let opts = Opt::from_args();
     let project_path = opts.project_path.unwrap_or(env::current_dir()?);
-    let flavors = resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
+    let flavors = utils::resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
     if flavors.is_err() {
         let e = flavors.unwrap_err();
         error!("Unable to resolve flavors: {}.", e.as_fail());
         std::process::exit(1);
     }
     let flavors = flavors.unwrap();
-    let vcs = identify_vcs(&opts.vcs, &project_path);
+    let vcs = VcsSystem::identify_vcs(&opts.vcs, &project_path);
     let build_server = BuildServer::default();
 
-    let minifest = get_minifest(&project_path, &opts.name, &opts.tag); //Minifest::from_disk(Some(&project_path));
+    let minifest = utils::get_minifest(&project_path, &opts.name, &opts.tag); //Minifest::from_disk(Some(&project_path));
     if minifest.is_err() {
         let e = minifest.unwrap_err();
         error!("Problem with manifest. {}", e.as_fail());

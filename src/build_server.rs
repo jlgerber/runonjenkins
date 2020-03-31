@@ -4,7 +4,7 @@
 //! the build server and request a remote build from it.
 use crate::{build_request::BuildRequest, constants::*, errors::RemoteBuildError};
 use failure::bail;
-use reqwest::{header::HeaderValue, header::CONTENT_TYPE, Request};
+use reqwest::{header::HeaderValue, header::CONTENT_TYPE};
 use std::{default::Default, str::FromStr};
 use url::{
     percent_encoding::{utf8_percent_encode, USERINFO_ENCODE_SET},

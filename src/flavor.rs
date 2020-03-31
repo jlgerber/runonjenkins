@@ -1,9 +1,8 @@
 use crate::RemoteBuildError;
+use failure::AsFail;
 use serde::{Deserialize, Serialize};
 use shellfn::shell;
 use std::{iter::Iterator, path::Path};
-use failure::AsFail;
-
 
 /// Retrieve a list of flavors given an optional path to the
 /// base git repo.
@@ -16,19 +15,21 @@ pub fn get_flavors(path: Option<&Path>) -> Result<Vec<String>, failure::Error> {
 
     let mut flavors = match _get_flavors(path) {
         Ok(val) => Ok(val),
-        Err(e) =>
-            Err(RemoteBuildError::FlavorError(
-                format!("Failure shelling out to pk manifest: {}", e.as_fail()))
-            )
+        Err(e) => Err(RemoteBuildError::FlavorError(format!(
+            "Failure shelling out to pk manifest: {}",
+            e.as_fail()
+        ))),
     }?;
 
-    let flavors = flavors.next().unwrap();
-    let flavors: Manifests = match serde_json::from_str(flavors.as_str()){
+    let flavors = flavors.next().ok_or(RemoteBuildError::EmptyError(
+        "Unable to unwrap next flavor".into(),
+    ))?;
+    let flavors: Manifests = match serde_json::from_str(flavors.as_str()) {
         Ok(val) => Ok(val),
-        Err(e) =>
-            Err(RemoteBuildError::FlavorError(
-                format!("Unable to retrieve flavors from manifest via pk manifest: {}", e.as_fail()))
-            )
+        Err(e) => Err(RemoteBuildError::FlavorError(format!(
+            "Unable to retrieve flavors from manifest via pk manifest: {}",
+            e.as_fail()
+        ))),
     }?;
 
     let result = flavors.manifests[0]
@@ -38,7 +39,6 @@ pub fn get_flavors(path: Option<&Path>) -> Result<Vec<String>, failure::Error> {
         .collect::<Vec<String>>();
     Ok(result)
 }
-
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Flavour {

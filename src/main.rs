@@ -1,13 +1,17 @@
+use failure::AsFail;
+use log::{debug, error, info};
 use pkg_build_remote::{
     get_flavors, traits::*, BuildRequest, BuildServer, Git, Minifest, Platform, RemoteBuildError,
     Svn, VcsSystem,
 };
-use prettytable::{table, row, cell, format};
 use pretty_env_logger;
-use log::{debug, info, error};
-use std::{env, io::{stdout, stdin, Write}, path::{Path, PathBuf}};
+use prettytable::{cell, format, row, table};
+use std::{
+    env,
+    io::{stdin, stdout, Write},
+    path::{Path, PathBuf},
+};
 use structopt::StructOpt;
-use failure::AsFail;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "pkg-build-remote")]
@@ -37,7 +41,7 @@ struct Opt {
 
     /// Optionally specify the name of the package instead of pulling it from
     /// the manifest.
-    #[structopt(short="n", long = "name")]
+    #[structopt(short = "n", long = "name")]
     name: Option<String>,
 
     /// Optionally specify the tag to build from instead of pulling it from the
@@ -135,22 +139,20 @@ fn build_requests(
     scm_type: &VcsSystem,
     platform: &Platform,
     flavors: &Vec<&str>,
-) -> Vec<BuildRequest> {
+) -> Result<Vec<BuildRequest>, RemoteBuildError> {
     let mut build_reqs = Vec::with_capacity(flavors.len());
     for flav in flavors {
-        build_reqs.push(
-            BuildRequest::new(
-                minifest.name.as_str(),
-                minifest.version.as_str(),
-                flav,
-                repo,
-                scm_type,
-                platform,
-            )
-            .unwrap(),
-        );
+        let build_request = BuildRequest::new(
+            minifest.name.as_str(),
+            minifest.version.as_str(),
+            flav,
+            repo,
+            scm_type,
+            platform,
+        )?;
+        build_reqs.push(build_request);
     }
-    build_reqs
+    Ok(build_reqs)
 }
 
 // Trigger a build on the given build server, with the project identified
@@ -193,7 +195,7 @@ fn request_build_for(
 
         let mut table = table!(
             [FYbH2c -> "Remote Build Request Information"],
-            [FYb -> "Route",     Fwb -> build_server.request_route().unwrap()],
+            [FYb -> "Route",     Fwb -> build_server.request_route().ok_or(RemoteBuildError::EmptyError("unable to unwrap request_route".into()))?],
             [FYb -> "Project",   Fwb ->  minifest.name],
             [FYb -> "VCS Tag",   Fwb -> minifest.version],
             [FYb -> "Flavors",   Fwb -> flavors.join(" , ").as_str()],
@@ -213,7 +215,10 @@ fn request_build_for(
         stdout().flush().ok().expect("unable to flush stdout");
         let reader = stdin();
         let mut result = String::new();
-        let _ = reader.read_line(&mut result).ok().expect("Failed to read line");
+        let _ = reader
+            .read_line(&mut result)
+            .ok()
+            .expect("Failed to read line");
         result = result.to_lowercase();
         if result != "y" && result != "yes" {
             println!("User cancelled build request: {}", result);
@@ -221,8 +226,13 @@ fn request_build_for(
         }
     }
     for platform in platforms {
-        let build_reqs =
-            build_requests(&minifest, vcs_project_url.as_str(), vcs, &platform, &flavors);
+        let build_reqs = build_requests(
+            &minifest,
+            vcs_project_url.as_str(),
+            vcs,
+            &platform,
+            &flavors,
+        )?;
         for br in build_reqs {
             debug!("{:?}", br);
             let _results = build_server.request_build(&br, verbose, dry_run)?;
@@ -268,7 +278,11 @@ fn resolve_flavors(
 
 // get the minifest from the path, unless both the name and tag are passed in as Some. Then
 // in that case, build the minifest out of them
-fn get_minifest(project_path: &Path, name: &Option<String>, tag: &Option<String>) -> Result<Minifest, failure::Error> {
+fn get_minifest(
+    project_path: &Path,
+    name: &Option<String>,
+    tag: &Option<String>,
+) -> Result<Minifest, failure::Error> {
     if name.is_some() && tag.is_some() {
         let name = name.as_ref().unwrap();
         let tag = tag.as_ref().unwrap();
@@ -283,18 +297,17 @@ fn main() -> Result<(), failure::Error> {
 
     let opts = Opt::from_args();
     let project_path = opts.project_path.unwrap_or(env::current_dir()?);
-    let flavors =  resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
+    let flavors = resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
     if flavors.is_err() {
-       let e = flavors.unwrap_err();
-        error!("Unable to resolve flavors: {}.",e.as_fail());
+        let e = flavors.unwrap_err();
+        error!("Unable to resolve flavors: {}.", e.as_fail());
         std::process::exit(1);
-
     }
     let flavors = flavors.unwrap();
     let vcs = identify_vcs(&opts.vcs, &project_path);
     let build_server = BuildServer::default();
 
-    let minifest = get_minifest(&project_path, &opts.name, &opts.tag);//Minifest::from_disk(Some(&project_path));
+    let minifest = get_minifest(&project_path, &opts.name, &opts.tag); //Minifest::from_disk(Some(&project_path));
     if minifest.is_err() {
         let e = minifest.unwrap_err();
         error!("Problem with manifest. {}", e.as_fail());
@@ -342,10 +355,10 @@ fn main() -> Result<(), failure::Error> {
     };
     match result {
         Err(e) => {
-            error!("{}",e.as_fail());
+            error!("{}", e.as_fail());
             std::process::exit(1);
         }
-        _ => ()
+        _ => (),
     };
     Ok(())
 }

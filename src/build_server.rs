@@ -2,7 +2,7 @@
 //!
 //! Provides the BuildServer struct, which is used to connect to
 //! the build server and request a remote build from it.
-use crate::{build_request::BuildRequest, constants::*};
+use crate::{build_request::BuildRequest, constants::*, errors::RemoteBuildError};
 use failure::bail;
 use reqwest::{header::HeaderValue, header::CONTENT_TYPE, Request};
 use std::{default::Default, str::FromStr};
@@ -11,7 +11,7 @@ use url::{
     Url,
 };
 
-use prettytable::{table, row, cell, format};
+use prettytable::{cell, format, row, table};
 /// A struct used to conncet with the build server, it stores
 /// attributes necessary to make a connection and provides methods
 /// to interact with the server, including the ability to request
@@ -107,7 +107,9 @@ impl BuildServer {
             bail!("Unable to call.request_route");
         }
 
-        let route = route.unwrap();
+        let route = route.ok_or(RemoteBuildError::EmptyError(
+            "unable to unwrap route".into(),
+        ))?;
         // convert the request to a json string
         let json = serde_json::to_string(&req.to_build_params())?;
         // url encode the string
@@ -141,16 +143,13 @@ impl BuildServer {
                     if verbose {
                         rheaders_table.add_row(row![FYbH2c -> "Return Headers"]);
                         for header in res.headers() {
-                            rheaders_table.add_row(
-                                row![
-                                    Fyb -> format!("{}",header.0).as_str(),
-                                    Fwb -> format!("{:?}",header.1).as_str()
-                                ]
-                            );
-                        };
+                            rheaders_table.add_row(row![
+                                Fyb -> format!("{}",header.0).as_str(),
+                                Fwb -> format!("{:?}",header.1).as_str()
+                            ]);
+                        }
 
                         rheaders_table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-
                     }
 
                     rheaders_table.add_row(row![Fyb -> "Return Status", Fwb ->  res.status()]);

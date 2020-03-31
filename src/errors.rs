@@ -29,6 +29,8 @@ pub enum RemoteBuildError {
     ConversionError(String),
     #[fail(display = "None")]
     NoneError,
+    #[fail(display = "EmptyError: {}", _0)]
+    EmptyError(String),
     #[fail(display = "ParseError: {}", _0)]
     ParseError(String),
     #[fail(display = "FlavorError: {}", _0)]

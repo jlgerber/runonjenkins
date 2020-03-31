@@ -158,6 +158,9 @@ impl BuildRequest {
         let repo = BuildParameter::new("repo", self.repo.clone()); //todo take 'a
         let scm_type = BuildParameter::new("scmType", self.scm_type.clone());
         let platform = BuildParameter::new("platform", self.platform.clone());
+        // From Rohith:
+        // upstream_workspace is not being used. pass an empty string for now
+        let upstream_workspace = BuildParameter::new("upstream_workspace", String::new());
 
         params.push(project);
         params.push(version);
@@ -165,7 +168,8 @@ impl BuildRequest {
         params.push(repo);
         params.push(scm_type);
         params.push(platform);
-
+        params.push(upstream_workspace);
+        
         params
     }
 }

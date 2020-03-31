@@ -114,7 +114,7 @@ impl BuildServer {
         let json = serde_json::to_string(&req.to_build_params())?;
         // url encode the string
         let json: String = utf8_percent_encode(&json, USERINFO_ENCODE_SET).collect();
-
+        debug!("Request: {:#?}", json);
         // why am i doing this instead of using client.post().json.send()?
         // because F*&ing Jenkins doesnt understand posted json data. it wants
         // x-www-form-urlencoded data. So we set the header manually, as well as

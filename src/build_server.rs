@@ -58,8 +58,8 @@ impl BuildServer {
     pub fn request_route(&self) -> Option<Url> {
         match Url::from_str(
             format!(
-                "http://{}.{}:{}/{}",
-                self.host, self.domain, self.port, BUILD_ROUTE
+                "http://{}:{}@{}.{}:{}/{}",
+                USERNAME, PASSWORD, self.host, self.domain, self.port, BUILD_ROUTE
             )
             .as_str(),
         ) {

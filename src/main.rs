@@ -319,8 +319,8 @@ fn main() -> Result<(), failure::Error> {
     let result = match vcs {
         VcsSystem::Svn => {
             //let vcs_project_url = Svn::get_url(&project_path, minifest.version.as_str())?;
-            let url = Svn::get_server_urls(&project_path)?;
-            let url = &url[0];
+            let vcs_project_url = Svn::get_server_urls(&project_path)?;
+            let vcs_project_url = &url[0];
             request_build_for(
                 &build_server,
                 &minifest,

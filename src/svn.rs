@@ -77,7 +77,7 @@ impl Svn {
         debug!("get_url calling get_server_urls with {:?}", path);
         let url = Svn::get_server_urls(path)?;
         let url = &url[0];
-        let url = url::Url::parse(format!("{}/{}", url.as_str(), version).as_str())?;
+        let url = url::Url::parse(format!("{}/{}", url.as_str(), version).as_str())?;       
         Ok(url)
     }
 }

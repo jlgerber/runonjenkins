@@ -10,7 +10,7 @@ use url::{
     percent_encoding::{utf8_percent_encode, USERINFO_ENCODE_SET},
     Url,
 };
-use log;
+use log::debug;
 
 use prettytable::{cell, format, row, table};
 /// A struct used to conncet with the build server, it stores

@@ -85,6 +85,6 @@ impl Svn {
 #[shell]
 fn _get_svn_url(svn_base_path: &str) -> Result<String, failure::Error> {
     r#"
-        cd $SVN_BASE_PATH && svn info --show-item url --no-newline | sed 's/trunk/tags/'
+        cd $SVN_BASE_PATH && svn info --show-item url --no-newline | sed 's/trunk//'
     "#
 }

@@ -10,6 +10,29 @@ pub enum Platform {
     Unknown(String),
 }
 
+
+impl Platform {
+     
+    /// Given a &str of potentially comma separated platform names,
+    /// convert them to Platform instances, filtering out Platform::Unknowns
+    pub fn parse_platforms(platforms: &str) -> Vec<Platform> {
+        platforms
+            .split(",")
+            .map(|x| x.trim())
+            .map(|x| Platform::from(x))
+            // filter out any platforms that are unknown
+            .filter(|x| {
+                if let Platform::Unknown(_) = x {
+                    false
+                } else {
+                    true
+                }
+            })
+            .collect::<Vec<Platform>>()
+    }
+}
+
+
 // Convert from a &str to a Platform using the Platform::from(...) syntax.
 // This also comes into play with the Into<Platform> syntax. (as Into is defined
 // generally for any types which implement From)
@@ -42,6 +65,8 @@ impl ToString for Platform {
         }
     }
 }
+
+
 
 #[cfg(test)]
 mod tests {

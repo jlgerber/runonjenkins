@@ -2,7 +2,7 @@ use failure::AsFail;
 use log::{debug, error};
 use pkg_build_remote::{
     traits::*, BuildRequest, BuildServer, Git, Minifest, RemoteBuildError,
-    Svn, VcsSystem, utils,
+    Svn, VcsSystem, utils, Platform, Flavours
 };
 use pretty_env_logger;
 use prettytable::{cell, format, row, table};
@@ -88,8 +88,8 @@ fn request_build_for(
     verbose: bool,
     prompt: bool,
 ) -> Result<(), failure::Error> {
-    let platforms = utils::parse_platforms(platforms);
-    let flavors = utils::parse_flavors(flavors);
+    let platforms = Platform::parse_platforms(platforms);
+    let flavors = Flavours::parse_flavors(flavors);
 
     debug!("{:?}", vcs_project_url);
 
@@ -151,7 +151,7 @@ fn main() -> Result<(), failure::Error> {
 
     let opts = Opt::from_args();
     let project_path = opts.project_path.unwrap_or(env::current_dir()?);
-    let flavors = utils::resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
+    let flavors = Flavours::resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
     if flavors.is_err() {
         let e = flavors.unwrap_err();
         error!("Unable to resolve flavors: {}.", e.as_fail());

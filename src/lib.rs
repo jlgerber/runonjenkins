@@ -22,7 +22,7 @@ pub use platform::Platform;
 pub mod errors;
 pub use errors::*;
 pub mod flavor;
-pub use flavor::get_flavors;
+pub use flavor::Flavours;
 pub mod minifest;
 pub use minifest::Minifest;
 pub mod svn;

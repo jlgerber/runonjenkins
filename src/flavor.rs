@@ -52,6 +52,8 @@ impl Flavours {
                 e.as_fail()
             ))),
         }?;
+        
+        assert!(flavors.manifests.len() > 0);
 
         let result = flavors.manifests[0]
             .flavours
@@ -69,11 +71,12 @@ impl Flavours {
     }
 
 
-    // Given flavors and flavours options from the command line, reconcile the two and identify
-    // the requested flavors. This function will guard against specifying both flavors and flavours,
-    // exiting the process if neither is None.
-    // Furthermore, if both flavors and `flavours` are None, `resolve_flavors` will retrieve the
-    // full list of flavors from the manifest.
+    /// Given flavors and flavours options from the command line, reconcile the two and identify
+    /// the requested flavors. This function will guard against specifying both flavors and flavours,
+    /// exiting the process if neither is None.
+    /// Furthermore, if both flavors and `flavours` are None, `resolve_flavors` will retrieve the
+    /// full list of flavors from the manifest.
+    /// If the manifest isnt provided, then we will default to vanilla
     pub fn resolve_flavors(
         flavors: Option<String>,
         flavours: Option<String>,
@@ -85,7 +88,8 @@ impl Flavours {
         }
 
         let flavors = if flavours.is_none() && flavours.is_none() {
-            Self::get_flavors(path)?.join(".")
+            // think that this should be comma separated not dot...changing
+            Self::get_flavors(path).unwrap_or(vec!["^".into()]).join(",")
         } else if flavours.is_some() {
             flavours.unwrap()
         } else {

@@ -6,3 +6,5 @@ pub const PARAM_CNT: usize = 6;
 pub const OS_VAR: &'static str = "DD_OS";
 pub const USERNAME: &'static str = "automaton";
 pub const PASSWORD: &'static str = "automatonAdmin!";
+pub const SVN_ROOT: &'static str = "http://svnmaster/svn/software/";
+pub const GIT_ROOT: &'static str = "http://dd-git.d2.com";

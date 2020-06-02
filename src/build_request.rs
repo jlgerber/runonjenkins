@@ -138,7 +138,9 @@ impl BuildRequest {
     // which is serializable into json in the form that Jenkins
     // is looking for
     pub fn build_requests(
-        minifest: &Minifest,
+        //minifest: &Minifest,
+        name: &str,
+        version: &str,
         repo: &str,
         scm_type: &VcsSystem,
         platform: &Platform,
@@ -147,8 +149,10 @@ impl BuildRequest {
         let mut build_reqs = Vec::with_capacity(flavors.len());
         for flav in flavors {
             let build_request = BuildRequest::new(
-                minifest.name.as_str(),
-                minifest.version.as_str(),
+                //minifest.name.as_str(),
+               // minifest.version.as_str(),
+               name, 
+               version,
                 flav,
                 repo,
                 scm_type,
@@ -204,7 +208,7 @@ mod tests {
         );
         let reqf = req.unwrap().to_build_params();
         let j = serde_json::to_string(&reqf).unwrap();
-        assert_eq!(j, "{\"parameter\":[{\"name\":\"project\",\"value\":\"houdini_submission\"},{\"name\":\"version\",\"value\":\"5.4.0\"},{\"name\":\"flavor\",\"value\":\"^\"},{\"name\":\"repo\",\"value\":\"http://dd-svn.d2.com/svn/software/packages/houdini_submission\"},{\"name\":\"ScmType\",\"value\":\"Svn\"},{\"name\":\"platform\",\"value\":\"Cent6\"}]}");
+        assert_eq!(j, "{\"parameter\":[{\"name\":\"project\",\"value\":\"houdini_submission\"},{\"name\":\"version\",\"value\":\"5.4.0\"},{\"name\":\"flavor\",\"value\":\"^\"},{\"name\":\"repo\",\"value\":\"http://dd-svn.d2.com/svn/software/packages/houdini_submission\"},{\"name\":\"scmType\",\"value\":\"svn\"},{\"name\":\"platform\",\"value\":\"cent6_64\"},{\"name\":\"upstream_workspace\",\"value\":\"\"}]}");
     }
 }
 

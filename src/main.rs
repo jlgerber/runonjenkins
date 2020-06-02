@@ -15,14 +15,20 @@ use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "pkg-build-remote")]
+/// Trigger package builds on jenkins
+///
+/// There are broadly two use cases for pkg-build-remote. The first use case
+/// is relevant when operating from within a checked out project. In this case, contextual information
+/// is gleaned from the manifest and environment, and overrides are, in general
+/// optional.
+/// The second use case is for triggering a build without the source code checked
+/// out. In this case, one must supply the following options: scnm, flavors, vcs_url, name, tag.
 struct Opt {
-    // A flag, true if used in the command line. Note doc comment will
-    // be used for the help message of the flag.
+    
     /// The source code management system in use for the particular
-    /// project. This is optional, as pkg-build-remote will attempt to
-    /// identify the system by scanning the current working directory, or
-    /// the directory supplied via the --repo-path flag in
-    /// order to identify the correct version control system.
+    /// project. This must be used in two cases: (1) if building outside of 
+    /// the package source, or (2) if both .svn and .git are present in the 
+    /// package source.  
     /// Current choices: git | svn
     #[structopt(short = "s", long = "scm")]
     vcs: Option<String>,
@@ -35,9 +41,14 @@ struct Opt {
 
     /// Optionally suppiy one or more flavours as a comma separated
     /// list. By default, pkg-build-remote will attempt to build all
-    /// of the flavors defined in the manifest.
+    /// of the flavors defined in the manifest, if supplied. Otherwise,
+    /// the vanilla flavor will be used.
     #[structopt(short = "f", long = "flavours")]
     flavours: Option<String>,
+
+    /// Optionally suppiy the vcs url
+    #[structopt(short = "v", long = "vcs-url")]
+    vcs_url: Option<String>,
 
     /// Optionally specify the name of the package instead of pulling it from
     /// the manifest.
@@ -45,12 +56,13 @@ struct Opt {
     name: Option<String>,
 
     /// Optionally specify the tag to build from instead of pulling it from the
-    /// manifest (in the form of the version)
+    /// manifest. It is assumed that the tag and version are identical.
     #[structopt(short = "t", long = "tag")]
     tag: Option<String>,
 
     /// Not fond of the British spelling? Register your disatisfaction at
-    /// taxation without representation by using the American spelling.
+    /// taxation without representation by using the American spelling. For the actual
+    /// description, take a look at `flavours`.
     #[structopt(long = "flavors")]
     flavors: Option<String>,
 
@@ -60,7 +72,7 @@ struct Opt {
     platforms: String,
 
     /// Provide verbose feedback to stdout
-    #[structopt(short = "v", long = "verbose")]
+    #[structopt(long = "verbose")]
     verbose: bool,
 
     /// When set to true, pkg-build-remote will report on its choices,
@@ -79,7 +91,8 @@ struct Opt {
 // pretend to do a build.
 fn request_build_for(
     build_server: &BuildServer,
-    minifest: &Minifest,
+    name: &str,
+    version: &str,
     vcs_project_url: &url::Url,
     vcs: &VcsSystem,
     platforms: &str,
@@ -100,8 +113,8 @@ fn request_build_for(
         let mut table = table!(
             [FYbH2c -> "Remote Build Request Information"],
             [FYb -> "Route",     Fwb -> build_server.request_route().ok_or(RemoteBuildError::EmptyError("unable to unwrap request_route".into()))?],
-            [FYb -> "Project",   Fwb ->  minifest.name],
-            [FYb -> "VCS Tag",   Fwb -> minifest.version],
+            [FYb -> "Project",   Fwb ->  name],
+            [FYb -> "VCS Tag",   Fwb -> version],
             [FYb -> "Flavors",   Fwb -> flavors.join(" , ").as_str()],
             [FYb -> "VCS Repo",  Fwb -> vcs_project_url.as_str()],
             [FYb -> "Platforms", Fwb -> platform_str.as_str()]
@@ -131,7 +144,8 @@ fn request_build_for(
     }
     for platform in platforms {
         let build_reqs = BuildRequest::build_requests(
-            &minifest,
+            name,
+            version,
             vcs_project_url.as_str(),
             vcs,
             &platform,
@@ -145,11 +159,11 @@ fn request_build_for(
     Ok(())
 }
 
-
 fn main() -> Result<(), failure::Error> {
     pretty_env_logger::init();
 
     let opts = Opt::from_args();
+
     let project_path = opts.project_path.unwrap_or(env::current_dir()?);
     let flavors = Flavours::resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
     if flavors.is_err() {
@@ -161,23 +175,42 @@ fn main() -> Result<(), failure::Error> {
     let vcs = VcsSystem::identify_vcs(&opts.vcs, &project_path);
     let build_server = BuildServer::default();
 
-    let minifest = utils::get_minifest(&project_path, &opts.name, &opts.tag); //Minifest::from_disk(Some(&project_path));
-    if minifest.is_err() {
-        let e = minifest.unwrap_err();
-        error!("Problem with manifest. {}", e.as_fail());
-        std::process::exit(1);
-    }
-    let minifest = minifest.unwrap();
-    debug!("{:?}", minifest);
+    let (name, version) = if opts.name.is_some() && opts.tag.is_some() {
+        (opts.name.unwrap(), opts.tag.unwrap())
+    } else {
+        let minifest = utils::get_minifest(&project_path, &opts.name, &opts.tag); //Minifest::from_disk(Some(&project_path));
+        
+        if  let Ok(Minifest{name, version}) = minifest {
+            (name,version)
+
+        }   else {
+            let e = minifest.unwrap_err();
+            error!("Problem with manifest. {}", e.as_fail());
+            std::process::exit(1);
+        }    
+    };
+   
 
     let result = match vcs {
         VcsSystem::Svn => {
             //let vcs_project_url = Svn::get_url(&project_path, minifest.version.as_str())?;
-            let vcs_project_url = Svn::get_server_urls(&project_path)?;
-            let vcs_project_url = &vcs_project_url[0];
+            let vcs_project_url = opts.vcs_url.map(|u|{
+                url::Url::parse(&u).unwrap_or_else(|e| {
+                    error!("unable to construct url from path provided");
+                    std::process::exit(1);
+                })
+            
+            }).unwrap_or_else(|| {
+                let url = Svn::get_server_urls(&project_path).unwrap_or_else(|_|{
+                    error!("Unable to get svn server url from project path");
+                    std::process::exit(1);
+                });
+                url[0].clone()
+            });
             request_build_for(
                 &build_server,
-                &minifest,
+                &name,
+                &version,
                 &vcs_project_url,
                 &vcs,
                 &opts.platforms,
@@ -188,12 +221,24 @@ fn main() -> Result<(), failure::Error> {
             )
         }
         VcsSystem::Git => {
-            let vcs_project_url = Git::get_server_urls(&project_path)?;
-            let vcs_project_url = &vcs_project_url[0];
-
+           
+            let vcs_project_url = opts.vcs_url.map(|u|{
+                url::Url::parse(&u).unwrap_or_else(|e| {
+                    error!("unable to construct url from {}. error {}", u, e);
+                    std::process::exit(1);
+                })
+            
+            }).unwrap_or_else(|| {
+                let url = Git::get_server_urls(&project_path).unwrap_or_else(|_|{
+                    error!("Unable to get git server url from project path");
+                    std::process::exit(1);
+                });
+                url[0].clone()
+            });
             request_build_for(
                 &build_server,
-                &minifest,
+                &name,
+                &version,
                 &vcs_project_url,
                 &vcs,
                 &opts.platforms,

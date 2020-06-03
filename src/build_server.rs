@@ -7,10 +7,11 @@ use failure::bail;
 use reqwest::{header::HeaderValue, header::CONTENT_TYPE};
 use std::{default::Default, str::FromStr};
 use url::{
-    percent_encoding::{utf8_percent_encode, USERINFO_ENCODE_SET},
+    //percent_encoding::{utf8_percent_encode, USERINFO_ENCODE_SET},
     Url,
 };
 use log::debug;
+use percent_encoding::{utf8_percent_encode, USERINFO_ENCODE_SET};
 
 use prettytable::{cell, format, row, table};
 /// A struct used to conncet with the build server, it stores
@@ -100,8 +101,8 @@ impl BuildServer {
         req: &BuildRequest,
         verbose: bool,
         dry_run: bool,
-    ) -> Result<Option<reqwest::Response>, failure::Error> {
-        let client = reqwest::Client::new();
+    ) -> Result<Option<reqwest::blocking::Response>, failure::Error> {
+        let client = reqwest::blocking::Client::new();
 
         let route = self.request_route();
         if route.is_none() {

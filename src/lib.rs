@@ -32,6 +32,8 @@ pub use git::Git;
 pub mod machine_os;
 pub use machine_os::MachineOs;
 
+pub mod gpi;
+
 pub mod utils;
 
 pub mod prelude {

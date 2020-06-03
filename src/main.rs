@@ -39,6 +39,12 @@ struct Opt {
     #[structopt(short = "r", long = "repo-path", parse(from_os_str))]
     project_path: Option<PathBuf>,
 
+    /// Use the GPI to get project information rather than scraping disk. This 
+    /// affords the user the luxury of running this code from anywhere as opposed
+    /// to from within project directory
+    #[structopt(short = "g", long="gpi")]
+    use_gpi: bool,
+    
     /// Optionally suppiy one or more flavours as a comma separated
     /// list. By default, pkg-build-remote will attempt to build all
     /// of the flavors defined in the manifest, if supplied. Otherwise,
@@ -161,20 +167,33 @@ fn request_build_for(
 
 fn main() -> Result<(), failure::Error> {
     pretty_env_logger::init();
-
+    debug!("Initialized");
     let opts = Opt::from_args();
-
+    
+    debug!("retrieving project path");
     let project_path = opts.project_path.unwrap_or(env::current_dir()?);
+    debug!("project_path: {:?}", project_path);
+
+    debug!("retrieving flavors");
     let flavors = Flavours::resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
+   
+
     if flavors.is_err() {
         let e = flavors.unwrap_err();
         error!("Unable to resolve flavors: {}.", e.as_fail());
         std::process::exit(1);
     }
+
     let flavors = flavors.unwrap();
+    debug!("flavors retrieved: {:?}", flavors);
+
+    debug!("identifying vcs system");
     let vcs = VcsSystem::identify_vcs(&opts.vcs, &project_path);
+    debug!("VCS system {:?}", vcs);
+
     let build_server = BuildServer::default();
 
+    debug!("retrieving name and version");
     let (name, version) = if opts.name.is_some() && opts.tag.is_some() {
         (opts.name.unwrap(), opts.tag.unwrap())
     } else {
@@ -189,12 +208,16 @@ fn main() -> Result<(), failure::Error> {
             std::process::exit(1);
         }    
     };
-   
 
+    debug!("name: {:?} version: {:?}", name, version);
+   
+    debug!("invoking request_build_for based on vcs system");
     let result = match vcs {
         VcsSystem::Svn => {
+            debug!("Svn system...");
             //let vcs_project_url = Svn::get_url(&project_path, minifest.version.as_str())?;
             let vcs_project_url = opts.vcs_url.map(|u|{
+                debug!("parsing Url");
                 url::Url::parse(&u).unwrap_or_else(|e| {
                     error!("unable to construct url from path provided");
                     std::process::exit(1);
@@ -207,6 +230,9 @@ fn main() -> Result<(), failure::Error> {
                 });
                 url[0].clone()
             });
+
+            debug!("vcs_project_url: {:?}", &vcs_project_url);
+            debug!("calling request_build_for");
             request_build_for(
                 &build_server,
                 &name,
@@ -221,20 +247,24 @@ fn main() -> Result<(), failure::Error> {
             )
         }
         VcsSystem::Git => {
-           
+            debug!("Git system...");
             let vcs_project_url = opts.vcs_url.map(|u|{
+                debug!("parsing url");
                 url::Url::parse(&u).unwrap_or_else(|e| {
                     error!("unable to construct url from {}. error {}", u, e);
                     std::process::exit(1);
                 })
             
             }).unwrap_or_else(|| {
+                debug!("vcs_url empty. Retrieving url from Git::get_server_urls({:?})", &project_path);
                 let url = Git::get_server_urls(&project_path).unwrap_or_else(|_|{
                     error!("Unable to get git server url from project path");
                     std::process::exit(1);
                 });
+                assert!(url.len() > 0);
                 url[0].clone()
             });
+            debug!("vcs_project_url: {:?}", &vcs_project_url);
             request_build_for(
                 &build_server,
                 &name,

@@ -10,7 +10,7 @@ use serde;
 use url::{ParseError,Url};
 use crate::constants::*;
 use std::str::FromStr;
-
+use log::debug;
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -44,6 +44,7 @@ pub struct BuildParameters {
 impl BuildParameters {
     /// Create a new, empty BuildParameters struct.
     pub fn new() -> Self {
+        debug!("new BuildParameters instance");
         Self {
             parameter: Vec::with_capacity(PARAM_CNT),
         }
@@ -51,6 +52,7 @@ impl BuildParameters {
 
     /// Push a BuildParameter instance into the BuildParameters struct
     pub fn push(&mut self, value: BuildParameter) {
+        debug!("BuldParameters.push {:?}", &value);
         self.parameter.push(value);
     }
 }
@@ -90,13 +92,14 @@ impl BuildRequest {
         version: T,
         flavor: T,
         repo: &'a str,
-        scm_type: impl Into<VcsSystem>,
+        scm_type: impl Into<VcsSystem> + std::fmt::Debug,
         platform: P,
     ) -> Result<Self, ParseError>
     where
-        T: Into<String>,
-        P: Into<Platform>,
+        T: Into<String> + std::fmt::Debug,
+        P: Into<Platform> + std::fmt::Debug,
     {
+        debug!("BuildRequest::new({:?}, {:?}, {:?}, {:?}, {:?}, {:?})", project, version, flavor, repo, &scm_type, &platform);
         let url = Url::from_str(repo)?;
         Ok(Self {
             project: project.into(),
@@ -146,6 +149,7 @@ impl BuildRequest {
         platform: &Platform,
         flavors: &Vec<&str>,
     ) -> Result<Vec<BuildRequest>, RemoteBuildError> {
+        
         let mut build_reqs = Vec::with_capacity(flavors.len());
         for flav in flavors {
             let build_request = BuildRequest::new(
@@ -158,6 +162,7 @@ impl BuildRequest {
                 scm_type,
                 platform,
             )?;
+            debug!("adding build_request {:?} to build_reqs", &build_request);
             build_reqs.push(build_request);
         }
         Ok(build_reqs)

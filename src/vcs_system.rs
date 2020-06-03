@@ -5,7 +5,7 @@ use log::{debug,error};
 use std::path::Path;
 
 /// An enum whose variants represent common version control systems.
-#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize, Clone, Hash)]
 pub enum VcsSystem {
     #[serde(rename = "svn")]
     Svn,
@@ -51,35 +51,44 @@ impl ToString for VcsSystem {
 
 impl VcsSystem {
     // Given a reference to an Option<String> where the String is the vcs choice,
-// and a path to the location where we are to look in the event that the selection is None,
-// return a VcsSystem instance based either on supplied name (selection), or identification
-// from the path. In the event that the user has supplied an invalid VcsSystem or path,
-// this function will report an error to stderr and exit the process.
-pub fn identify_vcs(selection: &Option<String>, path: &Path) -> VcsSystem {
-    match selection {
-        Some(val) => {
-            debug!("vcs predefined");
-            let vcs_val = VcsSystem::from(val.as_str());
-            if let VcsSystem::Unknown(v) = vcs_val {
-                error!("Unknown vcs system: {}", v);
-                std::process::exit(1);
+    // and a path to the location where we are to look in the event that the selection is None,
+    // return a VcsSystem instance based either on supplied name (selection), or identification
+    // from the path. In the event that the user has supplied an invalid VcsSystem or path,
+    // this function will report an error to stderr and exit the process.
+    pub fn identify_vcs(selection: &Option<String>, path: &Path) -> VcsSystem {
+        match selection {
+            Some(val) => {
+                debug!("vcs predefined");
+                let vcs_val = VcsSystem::from(val.as_str());
+                if let VcsSystem::Unknown(v) = vcs_val {
+                    error!("Unknown vcs system: {}", v);
+                    std::process::exit(1);
+                }
+                return vcs_val;
             }
-            return vcs_val;
+            None => {
+                if Git::is_repo(path) {
+                    debug!("git found");
+                    return VcsSystem::from("git");
+                }
+                if Svn::is_repo(path) {
+                    debug!("svn found");
+                    return VcsSystem::from("svn");
+                }
+            }
         }
-        None => {
-            if Git::is_repo(path) {
-                debug!("git found");
-                return VcsSystem::from("git");
-            }
-            if Svn::is_repo(path) {
-                debug!("svn found");
-                return VcsSystem::from("svn");
-            }
+        error!("Error: No VCS system idemtified");
+        std::process::exit(1);
+    }
+
+    /// Is the VCS System a recognized system or is it unknown
+    pub fn is_valid(&self) -> bool {
+        if let VcsSystem::Unknown(ref _value) = self {
+            false 
+        } else {
+            true
         }
     }
-    error!("Error: No VCS system idemtified");
-    std::process::exit(1);
-}
 
 }
 

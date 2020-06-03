@@ -1,24 +1,24 @@
 [package]
 name = "pkg-build-remote"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["jonathan gerber <jlgerber@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-serde_yaml = "0.8.8"
-serde = { version = "1.0.90", features = ["derive"] }
+serde_yaml = "0.8.11"
+serde = { version = "1.0.106", features = ["derive"] }
 serde-aux = "0.6.1"
-url = "1.7.2"
-reqwest = "0.9.16"
-serde_json = "1.0.39"
-serde_derive = "1.0.90"
+url = "2.1.1"
+reqwest = "0.10.4"
+serde_json = "1.0.51"
+serde_derive = "1.0.106"
 shellfn = "0.1.1"
 strum = "0.18.0"
 strum_macros = "0.18.0"
-failure = "0.1.5"
-git2 = "0.8.0"
-structopt = "0.2.15"
-serde_urlencoded = "0.5.5"
+failure = "0.1.7"
+git2 = "0.13.2"
+structopt = "0.3.13"
+serde_urlencoded = "0.6.1"
 prettytable-rs = "0.8.0"
-log = "0.4.6"
-pretty_env_logger = "0.3.0"
+log = "0.4.8"
+pretty_env_logger = "0.4.0"

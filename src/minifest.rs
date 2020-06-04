@@ -1,4 +1,4 @@
-use crate::{RemoteBuildError, ShellFnError};
+use crate::{RemoteBuildError, RemoteBuildError::ShellFnError};
 use shellfn::shell;
 use std::path::Path;
 

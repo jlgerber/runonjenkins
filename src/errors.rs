@@ -1,49 +1,29 @@
-use failure::Fail;
-use std::fmt;
+use thiserror::Error;
 
-#[derive(Debug, Clone, Fail)]
-pub struct ShellFnError(pub String);
-
-impl fmt::Display for ShellFnError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "invalid result from shellfmt: {}", self.0)
-    }
-}
-
-#[derive(Debug, Clone, Fail)]
-pub struct RouteError(pub String);
-
-impl fmt::Display for RouteError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Problem with route: {}", self.0)
-    }
-}
-
-#[derive(Fail, Debug)]
+#[derive(Error, Debug)]
 pub enum RemoteBuildError {
-    #[fail(display = "Input was invalid UTF-8 at index {}", _0)]
+    #[error("Input was invalid UTF-8 at index {0}")]
     Utf8Error(usize),
-    #[fail(display = "{}", _0)]
-    Io(#[fail(cause)] std::io::Error),
-    #[fail(display = "ConversionError: {}", _0)]
+    #[error("{0}")]
+    Io(#[from] std::io::Error),
+    #[error("ConversionError: {0}")]
     ConversionError(String),
-    #[fail(display = "None")]
+    #[error("serde_json build error: {0:?}")]
+    SerdeJsonError(#[from] serde_json::Error),
+    #[error("NoneError")]
     NoneError,
-    #[fail(display = "EmptyError: {}", _0)]
+    #[error("ShellFnError {0}")]
+    ShellFnError(String ),
+    #[error("EmptyError: {0}")]
     EmptyError(String),
-    #[fail(display = "ParseError: {}", _0)]
-    ParseError(String),
-    #[fail(display = "FlavorError: {}", _0)]
+    #[error("ParseError: {0}")]
+    ParseError(#[from] url::ParseError),
+    #[error("FlavorError: {0}")]
     FlavorError(String),
-    #[fail(display = "FailureError: {}", _0)]
+    #[error("FailureError: {0}")]
     FailureError(String),
-}
-
-// make sure that we can convert from a reference to self
-impl From<std::io::Error> for RemoteBuildError {
-    fn from(value: std::io::Error) -> Self {
-        RemoteBuildError::Io(value)
-    }
+    #[error("Gpi Record Failure {0}")]
+    GpiRecordFailure(String),
 }
 
 // make sure that we can convert from a reference to self
@@ -52,16 +32,3 @@ impl From<failure::Error> for RemoteBuildError {
         RemoteBuildError::FailureError(value.to_string())
     }
 }
-
-// make sure that we can convert from a reference to self
-impl From<url::ParseError> for RemoteBuildError {
-    fn from(value: url::ParseError) -> Self {
-        RemoteBuildError::ParseError(value.to_string())
-    }
-}
-// // make sure that we can convert from a reference to self
-// impl From<std::option::NoneError> for RemoteBuildError {
-//     fn from(value: std::option::NoneError) -> Self {
-//        RemoteBuildError::NoneError
-//     }
-// }

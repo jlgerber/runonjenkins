@@ -1,4 +1,3 @@
-use failure::AsFail;
 use log::{debug, error};
 use pkg_build_remote::{
     traits::*, BuildRequest, BuildServer, Git, Minifest, RemoteBuildError,
@@ -165,7 +164,16 @@ fn request_build_for(
     Ok(())
 }
 
-fn main() -> Result<(), failure::Error> {
+fn main() {
+    match main_() {
+        Ok(_) => (),
+        Err(e) => {
+            println!("\nERROR");
+            println!("{}\n", e);
+        }
+    }
+}
+fn main_() -> Result<(), RemoteBuildError> {
     pretty_env_logger::init();
     debug!("Initialized");
     let opts = Opt::from_args();
@@ -180,7 +188,7 @@ fn main() -> Result<(), failure::Error> {
 
     if flavors.is_err() {
         let e = flavors.unwrap_err();
-        error!("Unable to resolve flavors: {}.", e.as_fail());
+        error!("Unable to resolve flavors: {}.", e);
         std::process::exit(1);
     }
 
@@ -204,7 +212,7 @@ fn main() -> Result<(), failure::Error> {
 
         }   else {
             let e = minifest.unwrap_err();
-            error!("Problem with manifest. {}", e.as_fail());
+            error!("Problem with manifest. {}", e);
             std::process::exit(1);
         }    
     };

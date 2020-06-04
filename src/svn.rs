@@ -1,5 +1,5 @@
 use crate::RemoteBuildError;
-use crate::{prelude::*, ShellFnError};
+use crate::{prelude::*, RemoteBuildError::ShellFnError};
 use shellfn::shell;
 use std::{env::current_dir, path::Path, path::PathBuf};
 use log::debug;

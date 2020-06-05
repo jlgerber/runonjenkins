@@ -32,8 +32,9 @@ pub use errors::*;
 pub mod flavor;
 pub use flavor::Flavors;
 
-pub mod from_manifest;
-pub use from_manifest::minifest::Minifest;
+// not used
+//pub mod from_manifest;
+//pub use from_manifest::minifest::Minifest;
 
 pub mod svn;
 pub use svn::Svn;

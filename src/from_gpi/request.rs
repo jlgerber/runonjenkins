@@ -12,15 +12,11 @@ use crate::{
 // set up and execute the build using information gleaned from the gpi
 pub fn do_gpi(opts: Opt) ->  Result<(), RemoteBuildError> {
     
-    let name = opts.name.ok_or(RemoteBuildError::EmptyError("Missing name. Must be supplied".into()))?;
-    let tag = opts.tag.ok_or(RemoteBuildError::EmptyError("Missing tag. Must be supplied".into()))?;
-
-
-    let tags = PackageTagList::from_service(&name, &tag)?;
+    let tags = PackageTagList::from_service(&opts.name, &opts.tag)?;
     debug!("PackageTag {:#?}", tags);
 
     if tags.len() == 0 {
-        return Err(RemoteBuildError::EmptyError(format!("No Records exist for {}-{}", &name, &tag)));
+        return Err(RemoteBuildError::EmptyError(format!("No Records exist for {}-{}", &opts.name, &opts.tag)));
     }
 
     let build_server = BuildServer::default();
@@ -40,8 +36,8 @@ pub fn do_gpi(opts: Opt) ->  Result<(), RemoteBuildError> {
     debug!("request_build_for(...)");
     request_build_for(
         &build_server,
-        &name,
-        &tag,
+        &opts.name,
+        &opts.tag,
         &distribution.link()?,
         &distribution.uses, //vcs
         &opts.platforms,

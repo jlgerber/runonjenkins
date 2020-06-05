@@ -1,15 +1,19 @@
 
 use log::{debug};
 use crate::{
-   BuildRequest, BuildServer, Minifest, RemoteBuildError,
+    BuildRequest, 
+    BuildServer, 
+    //Minifest, 
+    RemoteBuildError,
     VcsSystem, Platform, Flavors
 };
 use prettytable::{cell, format, row, table};
 use std::{
     io::{stdin, stdout, Write},
-    path::Path,
+    //path::Path,
 };
 
+/* REMOVED LOCAL MODE
 // get the minifest from the path, unless both the name and tag are passed in as Some. Then
 // in that case, build the minifest out of them
 pub fn get_minifest(
@@ -25,7 +29,7 @@ pub fn get_minifest(
         Minifest::from_disk(Some(&project_path))
     }
 }
-
+*/
 
 // Trigger a build on the given build server, with the project identified
 // using the supplied parameters. Of course, if dry_run is true, then simply

@@ -34,11 +34,10 @@ pub struct Opt {
     #[structopt(short = "r", long = "repo-path", parse(from_os_str))]
     pub project_path: Option<PathBuf>,
 
-    /// Use the GPI to get project information rather than scraping disk. This 
-    /// affords the user the luxury of running this code from anywhere as opposed
-    /// to from within project directory
-    #[structopt(short = "g", long="gpi")]
-    pub use_gpi: bool,
+    /// Use information gleaned from the local manifest and vcs system rather
+    /// than using the GPI. Why would you do this? Why indeed.
+    #[structopt(short = "l", long="local")]
+    pub use_local_project: bool,
     
     /// If using the gpi (via --gpi) look up flavors in gpi and use them
     #[structopt(short="a", long="all-flavors")]

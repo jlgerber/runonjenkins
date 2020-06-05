@@ -2,7 +2,7 @@
 use log::{debug};
 use crate::{
    BuildRequest, BuildServer, Minifest, RemoteBuildError,
-    VcsSystem, Platform, Flavours
+    VcsSystem, Platform, Flavors
 };
 use prettytable::{cell, format, row, table};
 use std::{
@@ -43,7 +43,7 @@ pub fn request_build_for(
     prompt: bool,
 ) -> Result<(), RemoteBuildError> {
     let platforms = Platform::parse_platforms(platforms);
-    let flavors = Flavours::parse_flavors(flavors);
+    let flavors = Flavors::parse_flavors(flavors);
 
     debug!("{:?}", vcs_project_url);
 

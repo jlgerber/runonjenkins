@@ -1,4 +1,4 @@
-//! Model Flavors, or are they Flavours?
+//! Model Flavors, or are they Flavors?
 use crate::RemoteBuildError;
 use failure::AsFail;
 use serde::{Deserialize, Serialize};
@@ -9,24 +9,24 @@ use log::error;
 
 // A flavor has a package name, and a package version
 #[derive(Debug, Deserialize, Serialize)]
-struct Flavour {
+struct Flavor {
     name: String,
     version: String,
 }
 
-/// One or more Flavours grouped
+/// One or more Flavors grouped
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Flavours {
-    flavours: Vec<Flavour>,
+pub struct Flavors {
+    flavours: Vec<Flavor>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Manifests {
-    manifests: Vec<Flavours>,
+    manifests: Vec<Flavors>,
 }
 
 
-impl Flavours {
+impl Flavors {
     // Retrieve a list of flavors given an optional path to the
     // base git repo.
     fn get_flavors(path: Option<&Path>) -> Result<Vec<String>, failure::Error> {

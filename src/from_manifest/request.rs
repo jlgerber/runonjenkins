@@ -2,7 +2,7 @@
 use log::{debug, error};
 use crate::{
     traits::*, BuildServer, Git, Minifest, RemoteBuildError,
-    Svn, VcsSystem, utils, Flavours, utils::request_build_for,
+    Svn, VcsSystem, utils, Flavors, utils::request_build_for,
      cli::Opt
 };
 use std::env;
@@ -15,7 +15,7 @@ pub fn do_local( opts: Opt) ->  Result<(), RemoteBuildError> {
     debug!("project_path: {:?}", project_path);
 
     debug!("retrieving flavors");
-    let flavors = Flavours::resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
+    let flavors = Flavors::resolve_flavors(opts.flavors, opts.flavours, Some(&project_path));
    
     if flavors.is_err() {
         let e = flavors.unwrap_err();

@@ -30,7 +30,7 @@ pub mod errors;
 pub use errors::*;
 
 pub mod flavor;
-pub use flavor::Flavours;
+pub use flavor::Flavors;
 
 pub mod from_manifest;
 pub use from_manifest::minifest::Minifest;

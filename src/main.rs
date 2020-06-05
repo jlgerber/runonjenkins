@@ -26,10 +26,10 @@ fn main_() -> Result<(), RemoteBuildError> {
     debug!("Initialized");
     let opts = Opt::from_args();
     
-    let result = if opts.use_gpi {
-        from_gpi::request::do_gpi(opts)
-    } else {
+    let result = if opts.use_local_project {
         from_manifest::request::do_local(opts)
+    } else {
+        from_gpi::request::do_gpi(opts)
     };
 
     match result {

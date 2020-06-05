@@ -1,8 +1,10 @@
 
 use log::debug;
 use crate::{
-    BuildServer, RemoteBuildError,
-    packalaka_tags::PackageTagList, utils::request_build_for,
+    BuildServer, 
+    RemoteBuildError,
+    packalaka_tags::PackageTagList, 
+    utils::request_build_for,
     cli::Opt
 };
 
@@ -25,18 +27,17 @@ pub fn do_gpi(opts: Opt) ->  Result<(), RemoteBuildError> {
 
     let distribution = tags.get(0).unwrap(); // already testing that tags.len() > 0 above
     
-    let flavors = if opts.all_flavors {
-        tags.get(0).unwrap().flavors().join(",")
-    } else if opts.flavors.is_some() {
+    // if the user supplies flavors either via the flavor or flavour flag, go ahead and 
+    // use them. Otherwise, pull them from the gpi
+    let flavors = if opts.flavors.is_some() {
         opts.flavors.unwrap()
     } else if opts.flavours.is_some() {
         opts.flavours.unwrap()
     } else {
-        "^".into()
+       tags.get(0).unwrap().flavors().join(",")
     };
-    println!("flavors: {}", flavors);
-
-
+    debug!("flavors selected: {}", flavors);
+    debug!("request_build_for(...)");
     request_build_for(
         &build_server,
         &name,

@@ -3,7 +3,7 @@ use crate::errors::RemoteBuildError;
 use shellfn::shell;
 use log::debug;
 use crate::gpi::SourceStatus;
-use url::{ParseError,Url};
+use url::Url;
 use crate::vcs_system::VcsSystem;
 use std::str::FromStr;
 

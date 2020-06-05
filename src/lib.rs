@@ -34,6 +34,8 @@ pub use machine_os::MachineOs;
 
 pub mod gpi;
 
+pub mod packalaka_tags;
+
 pub mod utils;
 
 pub mod prelude {

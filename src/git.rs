@@ -1,5 +1,4 @@
-//use shellfn::shell;
-//use crate::ShellFnError;
+//! Introspect a local git repository
 use crate::prelude::*;
 use failure;
 use git2::Repository;

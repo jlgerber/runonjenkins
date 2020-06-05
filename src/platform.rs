@@ -32,7 +32,6 @@ impl Platform {
     }
 }
 
-
 // Convert from a &str to a Platform using the Platform::from(...) syntax.
 // This also comes into play with the Into<Platform> syntax. (as Into is defined
 // generally for any types which implement From)

@@ -1,3 +1,4 @@
+//! Model Flavors, or are they Flavours?
 use crate::RemoteBuildError;
 use failure::AsFail;
 use serde::{Deserialize, Serialize};
@@ -6,13 +7,14 @@ use std::{iter::Iterator, path::Path};
 use log::error;
 
 
-
+// A flavor has a package name, and a package version
 #[derive(Debug, Deserialize, Serialize)]
 struct Flavour {
     name: String,
     version: String,
 }
 
+/// One or more Flavours grouped
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Flavours {
     flavours: Vec<Flavour>,

@@ -2,15 +2,16 @@
 //! BuildRequest
 //!
 //! A BuildRequest models the data needed to trigger a build on jenkins. It includes the
-//! project, the version, the flavor, teh repo, teh scm type
+//! project, the version, the flavor, the repo, teh scm type
 use crate::BuildParamType;
-use crate::{Minifest, VcsSystem, Platform, RemoteBuildError};
+use crate::{VcsSystem, Platform, RemoteBuildError};
 use serde::{Serialize, Deserialize};
 use serde;
 use url::{ParseError,Url};
 use crate::constants::*;
 use std::str::FromStr;
 use log::debug;
+
 
 #[derive(Debug, PartialEq, PartialOrd, Eq, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

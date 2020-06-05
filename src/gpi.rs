@@ -5,6 +5,8 @@ use std::str::FromStr;
 use serde::{Deserialize};
 //use serde_json::Result;
 use crate::errors::RemoteBuildError;
+use shellfn::shell;
+use log::debug;
 
 /// A list of valid package types
 #[derive(EnumString, Display, Debug, AsRefStr, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Deserialize)]
@@ -170,6 +172,12 @@ impl GpiRecords {
     pub fn from_str(input: &str) -> Result<Self,RemoteBuildError> {//serde_json::Result<Self> {
         serde_json::from_str(input).map_err(|x| RemoteBuildError::SerdeJsonError(x))
     }
+    /// retrieve info from packalaka service
+    pub fn from_service(package: &str) -> Result<Self, RemoteBuildError> {
+        debug!("shelling out to get info");
+        let package_str = _get_packalaka(package).map_err(|e| RemoteBuildError::ShellFnError(format!("{:?}",e)))?;
+        Self::from_str(&package_str)
+    }
 
     /// retrieve the number of packages
     pub fn len(&self) -> usize {
@@ -187,6 +195,15 @@ impl GpiRecords {
     }
 
 }
+
+
+#[shell]
+fn _get_packalaka(package_name: &str) -> Result<String, shellfn::Error<std::convert::Infallible>> {
+    r#"
+        packalaka query --name $PACKAGE_NAME
+    "#
+}
+
 
 #[cfg(test)]
 mod tests {

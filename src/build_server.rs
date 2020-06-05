@@ -130,11 +130,7 @@ impl BuildServer {
             .body(format!("json={}", json))
             .build()
             .unwrap();
-        /*
-        if verbose  {
-            Self::request_report(&request);
-        }
-        */
+        
         // execute the actual query
         if !dry_run {
             let res = client.execute(request);

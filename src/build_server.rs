@@ -112,29 +112,7 @@ impl BuildServer {
     ) -> Result<Option<reqwest::blocking::Response>, failure::Error> {
         let client = reqwest::blocking::Client::new();
         
-       
-        // let (route, build_params) = 
-        // if let UserBuildRequest::Distribution(dist) = req {
-        //     // construct the route string
-        //     let route = self.request_route()
-        //         .ok_or(RemoteBuildError::EmptyError(
-        //             "unable to unwrap route".into(),
-        //         ))?;
-            
-        //     let build_params = dist.to_build_params();
-        //     (route, build_params)
-        // } else if let UserBuildRequest::Package(package) = req {
-        //     let route = self.request_build_route(&package.project, &package.tag)
-        //         .ok_or(RemoteBuildError::EmptyError(
-        //             "unable to unwrap route".into(),
-        //         ))?;
-
-        //    let build_params = package.to_build_params();
-        //    (route, build_params)
-        // } else {
-        //     panic!("Unable to extract UserBuildRequest");
-        // };
-         // generate route and build params differently, depending 
+        // generate route and build params differently, depending 
         // upon what type of UserBuildRequest we have.
         let (route, build_params) = match req {
                 UserBuildRequest::Distribution(dist) => {

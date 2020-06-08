@@ -19,6 +19,13 @@ use structopt::StructOpt;
 ///
 /// Just provide your package name and tag, ad we do the rest. You may optionally
 /// set specific flavors, or platform(s) as well.
+///
+/// If you do not supply flavors or platforms, we use the Packages Jenkins Pipeline
+/// which will automagically figure out what flavors and platforms to build for.
+///
+/// If you specify flavors or platforms explicitly, we use the Build Distribution
+/// Pipeline, which the Packages Pipeline delegates work to. Of the two, the 
+/// Packages pipeline should be preferred when possible.
 pub struct Opt {
     
     /// Optionally suppiy one or more flavours as a comma separated

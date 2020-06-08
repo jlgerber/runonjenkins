@@ -15,6 +15,12 @@ pub use vcs_system::VcsSystem;
 pub mod build_request;
 pub use build_request::*;
 
+pub mod package_build_request;
+pub use package_build_request::*;
+
+pub(crate) mod build_parameter;
+pub(crate) use build_parameter::*;
+
 pub mod build_param_type;
 pub use build_param_type::*;
 

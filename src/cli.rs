@@ -1,3 +1,8 @@
+//!   cli.rs
+//! 
+//! This module defines the cli interface for the command
+//! using the popular structopt crate
+
 use structopt::StructOpt;
 //use std::path::PathBuf;
 
@@ -39,8 +44,8 @@ pub struct Opt {
 
     /// Optionally supply a list of one or more, comma separated platforms to build for.
     /// This is case insensitive.
-    #[structopt(short = "p", long = "platforms", default_value = "cent7")]
-    pub platforms: String,
+    #[structopt(short = "p", long = "platforms")]
+    pub platforms: Option<String>,
 
     /// Provide verbose feedback to stdout
     #[structopt(short = "v", long = "verbose")]

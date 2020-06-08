@@ -2,7 +2,13 @@
 //!
 //! Provides the BuildServer struct, which is used to connect to
 //! the build server and request a remote build from it.
-use crate::{build_request::BuildRequest, constants::*, errors::RemoteBuildError};
+use crate::{
+    build_request::BuildRequest, 
+    package_build_request::PackageBuildRequest, 
+    constants::*, 
+    errors::RemoteBuildError,
+    utils::UserBuildRequest,
+};
 use failure::bail;
 use reqwest::{header::HeaderValue, header::CONTENT_TYPE};
 use std::{default::Default, str::FromStr};
@@ -14,6 +20,7 @@ use log::debug;
 use percent_encoding::{utf8_percent_encode, USERINFO_ENCODE_SET};
 
 use prettytable::{cell, format, row, table};
+
 /// A struct used to conncet with the build server, it stores
 /// attributes necessary to make a connection and provides methods
 /// to interact with the server, including the ability to request
@@ -69,24 +76,25 @@ impl BuildServer {
         }
     }
 
-    /*
-    // Report on the request object's composition
-    fn request_report(request: &Request) {
-
-        let mut table = table!(
-            [FYbH2c -> "Request Information"],
-            [FYb -> "URL", Fwb -> format!("{:?}",request.url())]
-
-        );
-        for header in request.headers() {
-            table.add_row(row![FYb -> format!("{}",header.0).as_str(), Fwb -> format!("{:?}",header.1).as_str()]);
+    /// Make a request to build all of the distributions for a given package
+    /// and tag. The requirement is that the build server would have to have scan'ed
+    /// the tags already. This will typically be the case for rebuilding existing
+    /// distributions which previously failed or didnt get built. 
+    /// In that case, this method should be preferred over ```request_route```
+    pub fn request_build_route(&self, package: &str, tag: &str) -> Option<Url> {
+        let route = format!("job/Packages/job/{}/job/{}/build", package, tag);
+        debug!("request_build_route() route: {}", &route);
+        match Url::from_str(
+            format!(
+                "http://{}:{}@{}.{}:{}/{}",
+                USERNAME, PASSWORD, self.host, self.domain, self.port, route
+            )
+            .as_str(),
+        ) {
+            Ok(e) => Some(e),
+            Err(_) => None,
         }
-        table.set_format(*format::consts::FORMAT_BORDERS_ONLY);
-        println!("");
-        table.printstd();
-        println!("");
     }
-    */
 
     /// Request a build from the build server, providing information per the
     /// req
@@ -98,22 +106,61 @@ impl BuildServer {
     /// * `dry_run` - are we simply fooling around or do we want to get stuff done?
     pub fn request_build(
         &self,
-        req: &BuildRequest,
+        req: UserBuildRequest,
         verbose: bool,
         dry_run: bool,
     ) -> Result<Option<reqwest::blocking::Response>, failure::Error> {
         let client = reqwest::blocking::Client::new();
+        
+       
+        // let (route, build_params) = 
+        // if let UserBuildRequest::Distribution(dist) = req {
+        //     // construct the route string
+        //     let route = self.request_route()
+        //         .ok_or(RemoteBuildError::EmptyError(
+        //             "unable to unwrap route".into(),
+        //         ))?;
+            
+        //     let build_params = dist.to_build_params();
+        //     (route, build_params)
+        // } else if let UserBuildRequest::Package(package) = req {
+        //     let route = self.request_build_route(&package.project, &package.tag)
+        //         .ok_or(RemoteBuildError::EmptyError(
+        //             "unable to unwrap route".into(),
+        //         ))?;
 
-        let route = self.request_route();
-        if route.is_none() {
-            bail!("Unable to call.request_route");
-        }
+        //    let build_params = package.to_build_params();
+        //    (route, build_params)
+        // } else {
+        //     panic!("Unable to extract UserBuildRequest");
+        // };
+         // generate route and build params differently, depending 
+        // upon what type of UserBuildRequest we have.
+        let (route, build_params) = match req {
+                UserBuildRequest::Distribution(dist) => {
+                // construct the route string
+                let route = self.request_route()
+                    .ok_or(RemoteBuildError::EmptyError(
+                        "unable to unwrap route".into(),
+                    ))?;
+                
+                let build_params = dist.to_build_params();
+                (route, build_params)
+            }
+             UserBuildRequest::Package(package) => {
+                let route = self.request_build_route(&package.project, &package.tag)
+                    .ok_or(RemoteBuildError::EmptyError(
+                        "unable to unwrap route".into(),
+                    ))?;
 
-        let route = route.ok_or(RemoteBuildError::EmptyError(
-            "unable to unwrap route".into(),
-        ))?;
+                let build_params = package.to_build_params();
+                (route, build_params)
+             }
+        };
+
         // convert the request to a json string
-        let json = serde_json::to_string(&req.to_build_params())?;
+        let json = serde_json::to_string(&build_params)?;
+
         // url encode the string
         let json: String = utf8_percent_encode(&json, USERINFO_ENCODE_SET).collect();
         debug!("Request: {:#?}", json);
